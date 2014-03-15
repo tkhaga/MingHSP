@@ -1,0 +1,56 @@
+;テキストフィールド
+
+	#include "minghsp.as"
+	#include "swfpreview.as"
+
+	ming_useSWFVersion 6					;■マルチバイト文字を含むのでバージョンを6以上にします
+
+	SWFFont fnt,"ipagp.fdb"					;■ipag.fdbというフォントファイルからSWFFontを作成して
+											;  変数fntに代入します
+
+	SWFMovie m
+
+	m_addFont fc,fnt						;■埋め込むフォントのSWFFontを指定し、
+											;  対応するSWFFontCharacterを作成して変数fcに代入します
+
+	;sel_c fc
+
+	c_addUTF8Chars "MingHSP日本語も扱えます"		;■埋め込む文字を指定します
+
+	SWFTextField tf,SWFTEXTFIELD_DRAWBOX | SWFTEXTFIELD_MULTILINE | SWFTEXTFIELD_WORDWRAP | SWFTEXTFIELD_USEFONT
+	;■テキストフィールドを表すオブジェクト、SWFTextFieldを作成して変数tfに代入します。
+	;  第二引数には作成するテキストフィールドの属性を表す数値を指定します。
+	;  複数指定する場合はそれぞれを"|"でつなぎます。
+	;  この例で指定されている数値はそれぞれ次のような意味があります。
+	;    SWFTEXTFIELD_DRAWBOX	枠を描画
+	;    SWFTEXTFIELD_MULTILINE	複数行
+	;    SWFTEXTFIELD_WORDWRAP	テキストフィールドの幅で折り返し
+	;    SWFTEXTFIELD_USEFONT	埋め込みフォントを使用
+
+	;sel_tf tf
+
+	tf_setFont fnt							;■テキストフィールドのフォントを指定します
+
+	tf_setColor 0x00,0x80,0x80				;■テキストフィールドの文字色を設定します
+
+	tf_setHeight 40f						;■テキストフィールドの文字の大きさを指定します
+
+	tf_addUTF8String "MingHSP\r日本語も扱えます"	;■テキストフィールドに文字列を追加します
+
+	tf_setBounds 240f,200f					;■テキストフィールドの大きさを指定します
+
+	m_add i,tf
+	i_moveTo 5f,130f
+	i_rotate 30f
+
+	m_setDimension 320f,320f
+
+	fname="test.swf"
+	m_save fname
+	mes stat
+	destroy_m m
+	destroy_tf tf
+	destroy_fnt fnt
+
+	swfpreview fname
+	stop

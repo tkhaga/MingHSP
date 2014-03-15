@@ -26,7 +26,7 @@
 
     HSP 3.0以上用
       swfpreview3.asをスクリプトから読み込み可能なディレクトリに入れて（通常はcommonディレクトリ）、スクリプトの先頭に
-	#include "swfpreview3.as"
+	#include "swfpreview.as"
       と書くことでswfpreviewが利用できるようになります
 
   命令一覧
@@ -121,4 +121,28 @@
 
     swf_cleanup
 
-      swfpreviewで作成した子ウィンドウを破棄（HSP終了時に自動で実行される）
+      swfpreviewで作成した子ウィンドウを破棄(HSP終了時に自動で実行される)
+
+  以下の命令はHSP3.0以降でのみ使用できます
+
+    starttrace s1
+
+        ParaFla!, Suzuka, MingHSP等aclibをActionScriptコンパイラに使用してい
+      るFlash製作ソフトの出力したSWFがActionScriptのtraceメソッドで出力した
+      内容の取得を開始します。
+        s1に空でない文字列を入れるとその文字列+traceメソッドの出力という形式
+      で現在のウィンドウに表示します。
+
+    gettrace v1
+
+        traceの出力結果を文字列変数として取得します。
+        starttraceを開始してからの全ての出力結果がv1に代入されます。
+
+    cleantrace
+
+        traceの出力結果をクリアします。
+
+    stoptrace
+
+        traceの出力の取得を停止します。
+        これまでの出力結果はクリアされません。

@@ -1,3 +1,56 @@
+ver1.0 beta12
+
+  --全体--
+    ・サンプルをいくつか追加しました
+
+  --MingHSP--
+    ・s_newStyles命令を使う場合、最初のs_newStylesの前にs_addSolidFill等が
+      ある場合にも正常に動作するようになった
+    ・minghsp.asでSWFTEXTFIELD_USEFONT, SWFTEXTFIELD_AUTOSIZEが間違って定義
+      されていたのを修正
+    ・命令名に"UTF8"と付く命令で空の文字列を引数に渡した場合強制終了していた
+      のを修正
+    ・mhsp_init命令でMingHSPが内部で保持している現在選択しているオブジェクト
+      の情報をクリアするようにした
+    ・MP3をイベントサウンド(m_startSound, mc_startSoundで鳴らすサウンド)
+      に使用できるようにした
+    ・SWFSoundオブジェクトをm_addExportでエクスポートできるようにした
+    ・SWFAction命令でming_useSWFVersionで設定した値が6以上ならスクリプトを
+      UTF-8に変換するようにした
+    ・UTF-8への変換で変換後のサイズの計算を間違っていたのを修正
+    ・s_loadPdrに関連する次の変更と修正を行った
+      ->PDCLIPのサイズ情報取得処理を高速化
+        (s_loadPdrでPDR_GETRECTONLYを指定した場合のみに影響)
+      ->s_loadPdrでグラデーションを使用したPDRを読み込むとメモリリークを
+        起こしていたのを修正
+      ->s_loadPdrでPDRファイルを読むのにSWFInputを使用するように変更
+      ->メモリからのPDRの読み込みで高確率で「システムエラー」になっていたのを
+        修正
+    ・ファイルを開けなかった場合はHSP側でエラー12になるようにした
+    ・aclibを20070113版に更新
+    ・HSP3でmhsp_add, mhsp_sub, mhsp_mul, mhsp_div, mhsp_intが使えなかった
+      のを修正
+    ・mhsp_f2d命令を追加。用途としてはfloat値を変数に代入する命令
+      (HSPの型としてはint)が代入する値をHSP3で扱えるdoubleに変換するという
+      ものを想定しています。HSP2でも一応使えますが使い道は無いです。
+    ・mhsp_fcloseallを廃止。mhsp_cleanupが同等の処理を行います
+    ・mhsp_cleanup命令を追加。これまでに作成されたすべてのオブジェクトの
+      破棄を行います。
+    ・sel_～, destroy_～を廃止。代わりにmhsp_sel, mhsp_destroy命令を追加。
+      経過措置としてsel_～, destroy_～はmhsp_sel, mhsp_destroyを呼び出す
+      別名として残されます。
+
+  --swfpreview--
+    ・ActionScriptのtraceメソッドによる出力を取得するための
+        starttrace
+        gettrace
+        stoptrace
+        cleartrace
+      命令を追加(HSP3.0以降でのみ使用可)。但しParaFla!, Suzuka, MingHSPの
+      ようにaclibをActionScriptコンパイラに使用しているFlash製作ソフトの出力
+      したSWFでのみ有効
+    ・細かい改良
+
 ver1.0 beta11.1 (06/07/10)
 
   --全体--

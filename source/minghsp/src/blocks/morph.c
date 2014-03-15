@@ -39,7 +39,6 @@ struct SWFMorph_s
 };
 
 
-		char aaa[10000];
 /* morph stuff */
 static int
 completeSWFMorphBlock(SWFBlock block)

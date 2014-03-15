@@ -1,5 +1,5 @@
 #ifdef __hsp26__
-;swfpreview (05/09/07)
+;swfpreview (06/07/13)
 
 	#module "swfpreview"
 
@@ -139,8 +139,8 @@
 	loop
 	swfx=rect.1-rect/20 :swfy=rect.3-rect.2/20
 	if compressed :swfx=winx-csrx :swfy=winy-csry
-	if x :swfx=x
-	if y :swfy=y
+	if x>0 :swfx=x
+	if y>0 :swfy=y
 
 	axcreate  hwnd,"ShockwaveFlash.ShockwaveFlash.1",csrx,csry,swfx,swfy
 	pos csrx,csry+swfy
@@ -266,7 +266,7 @@
 	#global
 #endif
 #ifdef __hsp30__
-;swfpreview3 (05/09/07)
+;swfpreview3 (06/07/13)
 
 #module swfpreview3
 
@@ -282,16 +282,14 @@
 
 	#deffunc swfpreview str flash,int x,int y
 
-	if objid!-1 :stt=1 :return
-
 	mref stt,64
 
-	fname=flash
+	if objid!-1 :stt=1 :return
 
-	exist fname
+	exist flash
 	if strsize<16 :stt=3 :return
 	sdim buf,16
-	bload fname,buf
+	bload flash,buf,16
 
 	compressed=0
 	if peek(buf, 0)='C' :compressed=1
@@ -323,16 +321,17 @@
 	loop
 	swfx=(rect.1-rect)/20 :swfy=(rect.3-rect.2)/20
 	if compressed :swfx=ginfo(12)-ginfo(22) :swfy=ginfo(13)-ginfo(23)
-	if x :swfx=x
-	if y :swfy=y
+	if x>0 :swfx=x
+	if y>0 :swfy=y
 
 	onerror gosub *atlerror
 	axobj swf,"ShockwaveFlash.ShockwaveFlash.1",swfx,swfy
 	objid=stat
 	onerror 0
-	if stt=1 :return
 
-	if peek(fname, 1)!':' :GetFullPathName fname,1024,varptr(fname),0
+	sdim fname,4096
+	fname=flash
+	if peek(fname, 1)!':' :GetFullPathName flash,4096,varptr(fname),0
 
 	swf->"LoadMovie" 0,fname
 
@@ -431,7 +430,44 @@
 		clrobj objid,objid
 		objid=-1
 	}
-	else :return
+
+	return
+
+*paraflatrace
+	comevarg command,evt
+	if command="ParaFlaTrace" {
+		comevarg command,evt,1
+		if tstr!"" {
+			mes tprefix+command
+		}
+		tracebuf+=command+"\n"
+	}
+
+	return
+
+	#deffunc starttrace str traceprefix
+
+	tracebuf=""
+	tprefix=traceprefix
+	comevent evt,swf,,*paraflatrace
+
+	return
+
+	#deffunc gettrace var trace
+
+	trace=tracebuf
+
+	return
+
+	#deffunc cleantrace
+
+	tracebuf=""
+
+	return
+
+	#deffunc stoptrace
+
+	delcom evt
 
 	return
 

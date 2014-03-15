@@ -1,0 +1,45 @@
+;静止テキスト
+
+	#include "minghsp.as"
+	#include "swfpreview.as"
+
+	SWFFont fnt,"ipag.fdb"		;■SWFFontオブジェクトをFDB形式フォントファイルから作成し
+								;  変数fntに代入します。
+
+	SWFText t					;■SWFTextオブジェクトを作成し、変数tに代入します。
+								;  SWFTextオブジェクトは静止テキストを表すオブジェクトです。
+
+	;sel_t t					;■初めてSWFTextオブジェクトが作成された時には自動的に
+								;  作成したオブジェクトが選択されるのでsel_tでオブジェクトを
+								;  選択する必要はありません。
+
+	t_setFont fnt				;■SWFTextオブジェクトにSWFFontオブジェクトを関連付けます。
+								;  SWFTextオブジェクトのテキストはこのSWFFontオブジェクトの
+								;  表すフォントで表示されます。
+								;  (FDBフォントファイルから作成したSWFFontオブジェクト
+								;  のみ指定できます)
+
+	t_setColor 0xff,0x00,0xff	;■文字色を設定します。RGBAの順に0～255(0x00～0xff)の範囲で
+								;  指定します。A省略時は255が指定されたのと同じになります。
+
+	t_setHeight 30f				;■文字の高さを設定します。
+
+	t_moveTo 0f,120f			;■文字の左上をSWFTextオブジェクトの基準点に対して指定しただけ
+								;  ずらします。
+
+	t_addUTF8String "表示能力のテスト"
+
+	SWFMovie m
+	m_add i,t
+
+	i_rotate 12f
+
+	fname="statictext.swf"
+	m_save fname
+	mes stat
+	destroy_m m
+	destroy_t t
+	destroy_fnt fnt
+
+	swfpreview fname
+	stop

@@ -1,20 +1,34 @@
-#include "minghsp3.as"
+	#include "minghsp.as"
+	#include "swfpreview.as"
 
-SWFShape shape
-sel_s shape
+	SWFShape shape
+	sel_s shape
 
-s_setLine 5,255,0,255,255
-s_drawLine 60f,30f
+	s_newStyles						;Å°Ç±ÇÍÇèúÇ≠Ç∆ï\é¶Ç…ÉSÉ~Ç™èoÇÈÇÊÇ§Ç…Ç»ÇËÇ‹Ç∑
+	s_movePenTo 10,10
+	s_setLine 10,255,0,255,255
+	s_drawLine 60f,30f
 
-SWFMovie movie
-sel_m movie
+	SWFMovieClip clip
+	sel_mc clip
 
-m_add i,shape
-sel_i i
+	mc_add i,shape
+	sel_i i
 
-repeat 10
-	m_nextFrame
-	i_move 20f,20f
-loop
+	repeat 10
+		i_move 10f,10f
+		mc_nextFrame
+	loop
 
-m_save "tutorial2.swf"
+	SWFMovie movie
+	sel_m movie
+
+	m_add i,clip
+
+	fname="tutorial2.swf"
+	m_save fname
+	destroy_m movie
+	destroy_mc clip
+	destroy_s shape
+
+	swfpreview fname

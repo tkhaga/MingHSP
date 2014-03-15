@@ -1,19 +1,27 @@
-#include "minghsp3.as"
+	#include "minghsp.as"
+	#include "swfpreview.as"
 
-SWFShape shape
-sel_s shape
+	SWFShape shape
+	sel_s shape
 
-s_setLine 5,255,0,255,255
-s_movePenTo 120f,120f
-s_drawLine 60f,60f
+	s_setLine 5,255,0,255,255
+	s_movePenTo 120f,120f
+	s_drawLine 60f,60f
 
-s_setLine 5,0,255,255,255
-s_movePenTo 120f,120f
-s_drawLineTo 60f,60f
+	s_setLine 5,0,255,255,255
+	s_movePenTo 120f,120f
+	s_drawLineTo 60f,60f
 
-SWFMovie movie
-sel_m movie
+	SWFMovie movie
+	sel_m movie
 
-m_add i,shape
+	m_add i,shape
 
-m_save "tutorial1.swf"
+	fname="tutorial1.swf"
+	m_save fname
+	mes stat
+	destroy_m movie
+	destroy_s shape
+
+	swfpreview fname
+	stop

@@ -39,4 +39,7 @@
 	m_save fname
 	mes stat					;ì¬‚³‚ê‚½SWF‚ÌƒTƒCƒY
 	swfpreview fname
+
+	destroy_m m
+	destroy_s s
 	stop

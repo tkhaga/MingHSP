@@ -1,0 +1,72 @@
+;s_newStylesを使った例
+
+	#include "minghsp.as"			;ヘッダファイルの結合
+	#include "swfpreview.as"
+
+	ming_useSWFVersion 4			;■フラッシュのバージョンを4に設定(携帯で再生するため)
+
+	SWFShape s						;■SWFShapeオブジェクトを作成し、変数sに代入します。
+									;  SWFShapeオブジェクトはベクタ画像を表すオブジェクトです。
+
+	;sel_s s						;■初めてSWFShapeオブジェクトが作成された時には自動的に
+									;  作成したオブジェクトが選択されるのでsel_sでオブジェクトを
+									;  選択する必要はありません。	
+
+	SWFMovieClip c					;■SWFMovieClipオブジェクトを作成し、変数cに代入します。
+									;  SWFMovieClipオブジェクトはムービークリップを表す
+									;  オブジェクトです。
+									;  ムービークリップはSWFMovieが表すメインのムービーとは
+									;  独立に再生されるムービーのことです。
+
+	s_addSolidFill f1,0,0xff,0x80	;■(R,G,B,A)=(0,0xff,0x80,0xff)のベタ塗りを表す
+									;  SWFFillオブジェクトを作成しf1に代入
+
+	s_setLeftFill f1				;■f1を左フィルに設定
+	s_setLine 1,0,0,0
+	s_movePenTo -24f,-24f
+	s_drawLine 48f
+	s_drawLine 0,96f
+	s_drawLine -48f
+	s_drawLine 0,-96f
+	s_newStyles						;■新しく図形を定義
+	s_addSolidFill f2,0,0x80,0xff	;(R,G,B,A)=(0,0xff,0x80,0xff)の塗りつぶしオブジェクトを作成(fにオブジェクトの参照を代入)
+	s_setLeftFill f2				;右フィルにfを設定
+	s_setLine 1,0x0,0x0,0
+	s_movePenTo -48f,-48f			;描画基準点を(-48,-48)に移動
+	s_drawLine 96f					;直線を引く
+	s_drawLine 0,96f
+	s_drawLine -96f
+	s_drawLine 0,-96f
+	mc_add i,s
+
+	repeat 48
+		i_multColor 1f,1f,1f,double(cnt)/48
+		i_rotateTo double(cnt*-180)/48
+		mc_nextFrame
+	loop
+
+	repeat 48
+		i_multColor 1f,1f,1f,double(48-cnt)/48
+		i_rotateTo double(cnt*-180)/48-180
+		mc_nextFrame
+	loop
+
+	SWFMovie m
+	m_add i,c
+	sel_i i
+	i_moveTo 100f,100f
+
+	m_setBackground 0xff,0xff,0xff	;背景色を(0xff,0xff,0xff)に設定
+	m_setDimension 200f,200f		;表示領域を(144,144)に設定
+	m_setRate 24f
+
+	fname="newstyles.swf"
+	m_save fname
+	mes stat						;ファイルサイズを表示
+	destroy_m m						;■各オブジェクトを削除
+	destroy_s s
+	destroy_f f1
+	destroy_f f2
+
+	swfpreview fname
+	stop

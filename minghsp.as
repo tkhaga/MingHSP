@@ -18,8 +18,8 @@
 	#define SWFTEXTFIELD_DRAWBOX   0x800
 	#define SWFTEXTFIELD_NOSELECT  0x1000
 	#define SWFTEXTFIELD_HTML      0x200
-	#define SWFTEXTFIELD_USEFONT   0x2000
-	#define SWFTEXTFIELD_AUTOSIZE  0x8000
+	#define SWFTEXTFIELD_USEFONT   0x100
+	#define SWFTEXTFIELD_AUTOSIZE  0x4000
 
 	#define SWFTEXTFIELD_ALIGN_LEFT    0
 	#define SWFTEXTFIELD_ALIGN_RIGHT   1
@@ -67,45 +67,49 @@
 	#define SWF_SOUND_STEREO           1
 
 	#define PDR_MORPH       0x01
-	#define PDR_GETRECTONLY 0x02
+	#define PDR_GETSIZEONLY 0x02
 	#define PDR_ASCLIP      0x04
 
 #ifdef __hsp26__
 ;original functions
 	#func mhsp_init mhsp_init 0
 
-	#func sel_s sel_s 0
-	#func sel_m sel_m 0
-	#func sel_i sel_i 0
-	#func sel_g sel_g 0
-	#func sel_bmp sel_bmp 0
-	#func sel_f sel_f 0
-	#func sel_p sel_p 0
-	#func sel_t sel_t 0
-	#func sel_fnt sel_fnt 0
-	#func sel_tf sel_tf 0
-	#func sel_mc sel_mc 0
-	#func sel_b sel_b 0
-	#func sel_v sel_v 0
-	#func sel_c sel_c 0
-	#func sel_si sel_si 0
+	#func mhsp_sel mhsp_sel 0
+	#func sel_s mhsp_sel 0
+	#func sel_m mhsp_sel 0
+	#func sel_i mhsp_sel 0
+	#func sel_g mhsp_sel 0
+	#func sel_bmp mhsp_sel 0
+	#func sel_f mhsp_sel 0
+	#func sel_p mhsp_sel 0
+	#func sel_t mhsp_sel 0
+	#func sel_fnt mhsp_sel 0
+	#func sel_tf mhsp_sel 0
+	#func sel_mc mhsp_sel 0
+	#func sel_b mhsp_sel 0
+	#func sel_v mhsp_sel 0
+	#func sel_c mhsp_sel 0
+	#func sel_si mhsp_sel 0
 
-	#func destroy_s destroy_s 0
-	#func destroy_m destroy_m 0
-	#func destroy_g destroy_g 0
-	#func destroy_bmp destroy_bmp 0
-	#func destroy_f destroy_f 0
-	#func destroy_p destroy_p 0
-	#func destroy_t destroy_t 0
-	#func destroy_fnt destroy_fnt 0
-	#func destroy_bfnt destroy_bfnt 0
-	#func destroy_tf destroy_tf 0
-	#func destroy_mc destroy_mc 0
-	#func destroy_b destroy_b 0
-	#func destroy_a destroy_a 0
-	#func destroy_snd destroy_snd 0
-	#func destroy_v destroy_v 0
-	#func destroy_pc destroy_pc 0
+	#func mhsp_destroy mhsp_destroy 0
+	#func destroy_s mhsp_destroy 0
+	#func destroy_m mhsp_destroy 0
+	#func destroy_g mhsp_destroy 0
+	#func destroy_bmp mhsp_destroy 0
+	#func destroy_f mhsp_destroy 0
+	#func destroy_p mhsp_destroy 0
+	#func destroy_t mhsp_destroy 0
+	#func destroy_fnt mhsp_destroy 0
+	#func destroy_bfnt mhsp_destroy 0
+	#func destroy_tf mhsp_destroy 0
+	#func destroy_mc mhsp_destroy 0
+	#func destroy_b mhsp_destroy 0
+	#func destroy_a mhsp_destroy 0
+	#func destroy_snd mhsp_destroy 0
+	#func destroy_v mhsp_destroy 0
+	#func destroy_pc mhsp_destroy 0
+
+	#func mhsp_isalive mhsp_isalive 0
 
 	#func mhsp_float mhsp_float 1
 	#func mhsp_add mhsp_add 1
@@ -113,8 +117,9 @@
 	#func mhsp_mul mhsp_mul 1
 	#func mhsp_div mhsp_div 1
 	#func mhsp_int mhsp_int 1
+	#func mhsp_f2d mhsp_f2d 1
 
-	#func mhsp_fcloseall mhsp_fcloseall 0
+	#func mhsp_cleanup mhsp_cleanup 0
 	#func mhsp_setwarnbuf mhsp_setwarnbuf 1
 	#func mhsp_getaswarn mhsp_getaswarn 1
 	#func mhsp_getaserror mhsp_getaserror 1
@@ -148,7 +153,7 @@
 	#func m_importFont m_importFont $202
 	#func m_addExport m_addExport 4
 	#func m_writeExports m_writeExports 0
-	#func m_Protect m_Protect 0
+	#func m_protect m_protect 0
 	#func m_namedAnchor m_namedAnchor 6
 
 ;SWFShape
@@ -382,47 +387,52 @@
 ;original functions
 	#func mhsp_init mhsp_init 0
 
-	#func sel_s sel_s 0
-	#func sel_m sel_m 0
-	#func sel_i sel_i 0
-	#func sel_g sel_g 0
-	#func sel_bmp sel_bmp 0
-	#func sel_f sel_f 0
-	#func sel_p sel_p 0
-	#func sel_t sel_t 0
-	#func sel_fnt sel_fnt 0
-	#func sel_tf sel_tf 0
-	#func sel_mc sel_mc 0
-	#func sel_b sel_b 0
-	#func sel_v sel_v 0
-	#func sel_c sel_c 0
-	#func sel_si sel_si 0
+	#func mhsp_sel mhsp_sel 0
+	#func sel_s mhsp_sel 0
+	#func sel_m mhsp_sel 0
+	#func sel_i mhsp_sel 0
+	#func sel_g mhsp_sel 0
+	#func sel_bmp mhsp_sel 0
+	#func sel_f mhsp_sel 0
+	#func sel_p mhsp_sel 0
+	#func sel_t mhsp_sel 0
+	#func sel_fnt mhsp_sel 0
+	#func sel_tf mhsp_sel 0
+	#func sel_mc mhsp_sel 0
+	#func sel_b mhsp_sel 0
+	#func sel_v mhsp_sel 0
+	#func sel_c mhsp_sel 0
+	#func sel_si mhsp_sel 0
 
-	#func destroy_s destroy_s 0
-	#func destroy_m destroy_m 0
-	#func destroy_g destroy_g 0
-	#func destroy_bmp destroy_bmp 0
-	#func destroy_f destroy_f 0
-	#func destroy_p destroy_p 0
-	#func destroy_t destroy_t 0
-	#func destroy_fnt destroy_fnt 0
-	#func destroy_bfnt destroy_bfnt 0
-	#func destroy_tf destroy_tf 0
-	#func destroy_mc destroy_mc 0
-	#func destroy_b destroy_b 0
-	#func destroy_a destroy_a 0
-	#func destroy_snd destroy_snd 0
-	#func destroy_v destroy_v 0
-	#func destroy_pc destroy_pc 0
+	#func mhsp_destroy mhsp_destroy 0
+	#func destroy_s mhsp_destroy 0
+	#func destroy_m mhsp_destroy 0
+	#func destroy_g mhsp_destroy 0
+	#func destroy_bmp mhsp_destroy 0
+	#func destroy_f mhsp_destroy 0
+	#func destroy_p mhsp_destroy 0
+	#func destroy_t mhsp_destroy 0
+	#func destroy_fnt mhsp_destroy 0
+	#func destroy_bfnt mhsp_destroy 0
+	#func destroy_tf mhsp_destroy 0
+	#func destroy_mc mhsp_destroy 0
+	#func destroy_b mhsp_destroy 0
+	#func destroy_a mhsp_destroy 0
+	#func destroy_snd mhsp_destroy 0
+	#func destroy_v mhsp_destroy 0
+	#func destroy_pc mhsp_destroy 0
+
+	#func mhsp_isalive mhsp_isalive 0
 
 	#func mhsp_float mhsp_float var,int
-	#func mhsp_add mhsp_add var,float,float
-	#func mhsp_sub mhsp_sub var,float,float
-	#func mhsp_mul mhsp_mul var,float,float
-	#func mhsp_div mhsp_div var,float,float
-	#func mhsp_int mhsp_int var,float
+	#func mhsp_add mhsp_add var,int,int
+	#func mhsp_sub mhsp_sub var,int,int
+	#func mhsp_mul mhsp_mul var,int,int
+	#func mhsp_div mhsp_div var,int,int
+	#func mhsp_int mhsp_int var,int
+	#func mhsp_f2d mhsp_f2d var,int
 
-	#func mhsp_fcloseall mhsp_fcloseall 0
+	#func mhsp_cleanup mhsp_cleanup 0
 	#func mhsp_setwarnbuf mhsp_setwarnbuf 1
 	#func mhsp_getaswarn mhsp_getaswarn 1
 	#func mhsp_getaserror mhsp_getaserror 1
@@ -456,7 +466,7 @@
 	#func m_importFont m_importFont $202
 	#func m_addExport m_addExport 4
 	#func m_writeExports m_writeExports 0
-	#func m_Protect m_Protect 0
+	#func m_protect m_protect 0
 	#func m_namedAnchor m_namedAnchor 6
 
 ;SWFShape

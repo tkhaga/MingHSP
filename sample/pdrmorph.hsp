@@ -1,33 +1,36 @@
 ;PDRファイルを使ったモーフィング
 
-#include "minghsp.as"
-#include "swfpreview.as"
+	#include "minghsp.as"
+	#include "swfpreview.as"
 
 	SWFMorph p
 	p_getShape1 s1
 	;sel_s s1
-	s_loadPdr "test9.pdr",PDR_MORPH	;モーフィングのときは第二パラメータをPDR_MORPHに
-	w=stat & 0xffff				;PDRの幅
-	h=(stat >> 16) & 0xefff		;PDRの高さ
+	s_loadPdr "test9.pdr",PDR_MORPH	;■モーフィングのときは第二パラメータをPDR_MORPHに
+	w=stat & 0xffff					;PDRの幅
+	h=(stat >> 16) & 0xefff			;PDRの高さ
+
 	p_getShape2 s2
 	sel_s s2
 	s_loadPdr "test9-2.pdr",PDR_MORPH
 
 	SWFMovieClip c
 	;sel_mc c
+
 	mc_add i,p
 	;sel_i i
 
-;i_move 300,200
 
-	repeat 20
-		i_setRatio 0.05f*cnt
+	frames=12
+	repeat frames
+		i_setRatio 1.0*cnt/frames
 		;i_move 10,10
 		
 		mc_nextFrame
 	loop
-	repeat 20
-		i_setRatio 0.05f*(20-cnt)
+
+	repeat frames
+		i_setRatio 1.0*(frames-cnt)/frames
 		;i_move -10,-10
 
 		mc_nextFrame
@@ -37,10 +40,15 @@
 	;sel_m m
 	m_add i,c
 
-	m_setRate 60f				;デフォルトの12fpsじゃ遅いので60fpsにする
+	m_setRate 48f				;デフォルトの12fpsじゃ遅いので48fpsにする
 	m_setDimension w,h
 	fname="morph.swf"
 	m_save fname
 	mes stat
+	destroy_m m
+	destroy_mc c
+	destroy_s s1
+	destroy_s s2
+
 	swfpreview fname
 	stop

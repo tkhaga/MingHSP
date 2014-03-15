@@ -12,6 +12,7 @@
 #include "blocks/matrix.h"
 #include "blocks/block.h"
 #include "blocks/character.h"
+#include "blocks/input.h"
 
 #include "pdr.h"
 
@@ -29,6 +30,7 @@ float Ming_getScale();
 #endif
 
 void SWFShape_newStyles(SWFShape shape);
+void SWFShape_setWhole(SWFShape shape);
 
 #define LINEMAX_INC     256
 #define LINEMAX_DEFAULT 255
@@ -39,15 +41,22 @@ typedef struct {
 } ANCHOR;
 
 typedef struct {
+	int PositionRatio;
+	int Color;
+} GRADENTRY;
+
+typedef struct {
 	byte flgClosePath;
 	int LineWidth, LineMode, LineColor, FillMode, FillColor;
 	int GradCenterX, GradCenterY, GradAngle, GradColor;
-	double GradRatio;
+	double GradRatioX, GradRatioY;
 	byte flgCompounded;
 	int CompoID;
 	int NumAnc;
+	int numentry;
 	byte processed;
 	ANCHOR *anchor;
+	GRADENTRY *grad;
 } PATH;
 
 typedef struct {
@@ -56,19 +65,14 @@ typedef struct {
 } PATHLIST;
 
 typedef struct {
-	/* 複合パスのID */
-	int compoid;
-	/* 複合パスに関連付けられる塗り情報のあるパス番号 */
-	int fillid;
+	int compoid;	/* 複合パスのID */
+	int fillid;		/* 複合パスに関連付けられる塗り情報のあるパス番号 */
 	int numpath;
-	/* 複合パスに関連付けられるパス番号の配列 */
-	int *pathlist;
+	int *pathlist;	/* 複合パスに関連付けられるパス番号の配列 */
 } COMPO;
 
 typedef struct {
 	int max;
-	int pathid;
-	int index;
 	COMPO *compo;
 } COMPOLIST;
 
@@ -78,10 +82,15 @@ typedef struct {
 	int flgmorph;
 	int ispdclip;
 	int linemax;
-	int *rect;
+	int size[2];	/* PdrReadHeader内では単位はピクセル、PdrWriteShape内ではTwip */
+	int version;
 	char *linebuf;
+#ifdef PDR_USE_SWFINPUT
+	SWFInput input;
+#else
 	void **src;
-	SWFShape shape;
+#endif
+	SWFShape shape;	/* == NULL ならサイズ取得のみ */
 	PATHLIST pathlist;
 	COMPOLIST compolist;
 } PDR;
@@ -89,12 +98,14 @@ typedef struct {
 typedef int (* GETCHAR)(void **);
 typedef void (* FREELINE)(char *, void *);
 
+#ifndef PDR_USE_SWFINPUT
 static GETCHAR GetChar;
 static FREELINE FreeLine;
 
-static int pdrlimit;	/* 読み込める残りのバイト数   */
-static int pdreol;		/* 0でないとき行末            */
-static int pdrerror;	/* 0でないときエラーが存在    */
+static int pdr_limit;	/* 読み込める残りのバイト数   */
+#endif
+static int pdr_eol;		/* 0でないとき行末            */
+static int pdr_error;	/* 0でないときエラーが存在    */
 
 static int FindCompo(COMPOLIST *list, int key)
 {
@@ -116,6 +127,7 @@ static int FindCompo(COMPOLIST *list, int key)
 	return i;
 }
 
+#ifndef PDR_USE_SWFINPUT
 static void FreeLineBuf(char *linebuf, void *ptr)
 {
 	free(linebuf);
@@ -126,6 +138,7 @@ static void FreeLineFile(char *linebuf, void *ptr)
 	fclose((FILE *)ptr);
 	free(linebuf);
 }
+#endif
 
 /* PDR構造体に関連するメモリ等の解放。使い方を限定しているので基本的にエラーチェックをしない */
 static void FreePdr(PDR *pdr)
@@ -133,7 +146,11 @@ static void FreePdr(PDR *pdr)
 	int i;
 	int max;
 
+#ifdef PDR_USE_SWFINPUT
+	free(pdr->linebuf);
+#else
 	FreeLine(pdr->linebuf, *pdr->src);
+#endif
 
 	if (pdr->compolist.compo) {
 		max = pdr->compolist.max;
@@ -147,6 +164,7 @@ static void FreePdr(PDR *pdr)
 		max = pdr->pathlist.max;
 		for (i = 0; i < max; i++) {
 			free(pdr->pathlist.path[i].anchor);
+			free(pdr->pathlist.path[i].grad);	/* NULLもしくは有効なアドレス */
 		}
 		free(pdr->pathlist.path);
 	}
@@ -159,8 +177,8 @@ static void IncPtr(char **p)
 			(*p)++;
 			break;
 		}
-		if (**p == '\r' || **p == '\0') {
-			pdreol = 1;
+		if (**p == '\r'  ||  **p == '\0') {
+			pdr_eol = 1;
 			break;
 		}
 		(*p)++;
@@ -168,14 +186,12 @@ static void IncPtr(char **p)
 }
 
 /* 第二引数が0でなければ省略可能(以下同じ) */
-static int GetNextValue(char **p, int skip)
+static int GetNextValue(char **p)
 {
 	int val;
 
-	if (pdreol) {
-		if (skip == 0) {
-			pdrerror = 1;
-		}
+	if (pdr_eol) {
+		pdr_error = 1;
 		return 0;
 	}
 
@@ -185,14 +201,12 @@ static int GetNextValue(char **p, int skip)
 	return val;
 }
 
-static byte GetNextFlgValue(char **p, int skip)
+static byte GetNextFlgValue(char **p)
 {
 	byte val;
 
-	if (pdreol) {
-		if (skip == 0) {
-			pdrerror = 1;
-		}
+	if (pdr_eol) {
+		pdr_error = 1;
 		return 0;
 	}
 
@@ -203,7 +217,7 @@ static byte GetNextFlgValue(char **p, int skip)
 		val = 0;
 	}
 	else {
-		pdrerror = 1;
+		pdr_error = 1;
 		return 0;
 	}
 
@@ -212,14 +226,12 @@ static byte GetNextFlgValue(char **p, int skip)
 	return val;
 }
 
-static double GetNextFloatValue(char **p, int skip)
+static double GetNextFloatValue(char **p)
 {
 	double val;
 
-	if (pdreol) {
-		if (skip == 0) {
-			pdrerror = 1;
-		}
+	if (pdr_eol) {
+		pdr_error = 1;
 		return 0;
 	}
 
@@ -229,10 +241,11 @@ static double GetNextFloatValue(char **p, int skip)
 	return val;
 }
 
+#ifndef PDR_USE_SWFINPUT
 /* 一文字読み込み */
 static int GetCharFromBuf(void **ptr)
 {
-	if (pdrlimit-- <= 0) {
+	if (pdr_limit-- <= 0) {
 		return EOF;
 	}
 
@@ -243,6 +256,7 @@ static int GetCharFromFile(void **ptr)
 {
 	return fgetc((FILE *)*ptr);
 }
+#endif
 
 /* 一行読み込み */
 static int GetLine(PDR *pdr)
@@ -252,16 +266,20 @@ static int GetLine(PDR *pdr)
 	int i;
 	int ret = 0;
 
-	pdreol = 0;
+	pdr_eol = 0;
 
 	for (i = 0; ; i++) {
+#ifdef PDR_USE_SWFINPUT
+		c = SWFInput_getChar(pdr->input);
+#else
 		c = GetChar(pdr->src);
+#endif
 		if (c == EOF || c == '\0') {
 			break;
 		}
 		if (c == '\r') {
 			if (i == 0) {
-				pdreol = 1;
+				pdr_eol = 1;
 			}
 			ret = 1;
 		}
@@ -298,49 +316,53 @@ static int GetLine(PDR *pdr)
 static int PdrReadHeader(PDR *pdr)
 {
 	int i;
+	char *ptok;
 
 	/* ヘッダの読み込み */
 	for (i = 0; i < 4; i++) {
-		if (pdrerror != 0 || !GetLine(pdr)) {
+		if (pdr_error != 0 || !GetLine(pdr)) {
 			return -1;
 		}
 		if (i == 0) {
 			/* PDRかPDCLIPか。PDCLIPならサイズ取得は別処理 */
-			if (pdr->linebuf[0] == 'P' && pdr->linebuf[1] == 'D') {
-				if (pdr->linebuf[2] == 'R') {
+			ptok = pdr->linebuf;
+			if (*ptok++ == 'P' && *ptok++ == 'D') {
+				if (*ptok == 'R') {
+					ptok++;
 				}
-				else if (pdr->linebuf[2] == 'C' && pdr->linebuf[3] == 'L' &&
-					 pdr->linebuf[4] == 'I' && pdr->linebuf[5] == 'P')
+				else if (*ptok++ == 'C' && *ptok++ == 'L' &&
+					 *ptok++ == 'I' && *ptok++ == 'P')
 				{
 					pdr->ispdclip = 1;
 				}
 				else {
 					return -1;
 				}
+				pdr->version = GetNextValue(&ptok);
 			}
 			else {
 				return -1;
 			}
 		}
 		if (i == 1) {
-			char *ptok = pdr->linebuf;
+			ptok = pdr->linebuf;
 			if (pdr->ispdclip != 0) {
-				pdr->NumPath = GetNextValue(&ptok, 0);
-				pdr->ClipX = GetNextValue(&ptok, 0);
-				pdr->ClipY = GetNextValue(&ptok, 0);
-				if (pdrerror != 0) {
+				pdr->NumPath = GetNextValue(&ptok);
+				pdr->ClipX = GetNextValue(&ptok);
+				pdr->ClipY = GetNextValue(&ptok);
+				if (pdr_error != 0) {
 					return -1;
 				}
 				break;	/* PDCLIPならヘッダは二行なのでここでループを抜ける */
 			}
 			else {
-				pdr->rect[0] = GetNextValue(&ptok, 0);
-				pdr->rect[1] = GetNextValue(&ptok, 0);
+				pdr->size[0] = GetNextValue(&ptok);
+				pdr->size[1] = GetNextValue(&ptok);
 			}
 		}
 		if (i == 3) {
-			char *ptok = pdr->linebuf;
-			pdr->NumPath = GetNextValue(&ptok, 0);
+			ptok = pdr->linebuf;
+			pdr->NumPath = GetNextValue(&ptok);
 		}
 	}
 
@@ -350,60 +372,103 @@ static int PdrReadHeader(PDR *pdr)
 static int PdrReadData(PDR *pdr)
 {
 	int i, j;
+	char *ptok;
 
-	PATH *ppath = pdr->pathlist.path;
+	PATH *ppath;
+	ANCHOR *panchor;
+	GRADENTRY *pgrad;
+
+	/* 複合パスの情報を管理する。要素数は高々NumPath個 */
+	pdr->compolist.max = 0;
+	if ( !(pdr->compolist.compo = (COMPO *)calloc(pdr->NumPath, sizeof(COMPO))) ) {
+		return -1;
+	}
+
+	pdr->pathlist.max = 0;
+	if ( !(pdr->pathlist.path = (PATH *)calloc(pdr->NumPath, sizeof(PATH))) ) {
+		return -1;
+	}
+
+	ppath = pdr->pathlist.path;
 
 	/* パス情報の読み込み */
 	for (i = 0; i < pdr->NumPath; i++) {
-		char *ptok;
-		ANCHOR *panchor;
 
 		pdr->pathlist.max++;
 
-		if (pdrerror != 0 || !GetLine(pdr)) {
-			FreePdr(pdr);
+		if (pdr_error != 0  ||  !GetLine(pdr)) {
 			return -1;
 		}
 		ptok = pdr->linebuf;
 
-		ppath->NumAnc        = GetNextValue(&ptok, 0);
-		ppath->flgClosePath  = GetNextFlgValue(&ptok, 0);
-		ppath->LineWidth     = GetNextValue(&ptok, 0);
-		ppath->LineMode      = GetNextValue(&ptok, 0);
-		ppath->LineColor     = GetNextValue(&ptok, 0);
-		ppath->FillMode      = GetNextValue(&ptok, 0);
-		ppath->FillColor     = GetNextValue(&ptok, 0);
-		ppath->GradCenterX   = GetNextValue(&ptok, 0);
-		ppath->GradCenterY   = GetNextValue(&ptok, 0);
-		ppath->GradAngle     = GetNextValue(&ptok, 0);
-		ppath->GradRatio     = GetNextFloatValue(&ptok, 0);
-		ppath->GradColor     = GetNextValue(&ptok, 0);
-		GetNextFlgValue(&ptok, 0);
-		GetNextValue(&ptok, 0);
-
-		/* PDR Ver0.1には存在しない */
-		ppath->flgCompounded = GetNextFlgValue(&ptok, 1);
-		ppath->CompoID       = GetNextValue(&ptok, 1);
+		ppath->NumAnc        = GetNextValue(&ptok);
+		ppath->flgClosePath  = GetNextFlgValue(&ptok);
+		ppath->LineWidth     = GetNextValue(&ptok);
+		ppath->LineMode      = GetNextValue(&ptok);
+		ppath->LineColor     = GetNextValue(&ptok);
+		ppath->FillMode      = GetNextValue(&ptok);
+		ppath->FillColor     = GetNextValue(&ptok);
+		ppath->GradCenterX   = GetNextValue(&ptok);
+		ppath->GradCenterY   = GetNextValue(&ptok);
+		ppath->GradAngle     = GetNextValue(&ptok);
+		ppath->GradRatioX    = GetNextFloatValue(&ptok);
+		if (pdr->version >= 30) {
+			ppath->GradRatioY = GetNextFloatValue(&ptok);
+		}
+		else {
+			ppath->GradRatioY = ppath->GradRatioX;
+		}
+		ppath->GradColor     = GetNextValue(&ptok);
+		GetNextFlgValue(&ptok);
+		GetNextValue(&ptok);
+		if (pdr->version >= 20) {
+			ppath->flgCompounded = GetNextFlgValue(&ptok);
+			ppath->CompoID       = GetNextValue(&ptok);
+		}
 
 		ppath->processed = 0;
 
-		/* アンカー情報の読み込み */
-		panchor = ppath->anchor = (ANCHOR *)malloc(sizeof(ANCHOR) * (ppath->NumAnc + 3));
+		ppath->grad = NULL;	/* NULLになっている保証はないので一応 */
+
+		/* グラデーションブロックの読み込み(PDR Ver0.3以上のみ) */
+		if (pdr->version >= 30) {
+			if (pdr_error != 0  ||  !GetLine(pdr)) {
+				return -1;
+			}
+			ptok = pdr->linebuf;
+			ppath->numentry = GetNextValue(&ptok);
+			if (ppath->numentry > 0) {
+				pgrad = ppath->grad = (GRADENTRY *)calloc(ppath->numentry, sizeof(GRADENTRY));
+				if (!pgrad) {
+					return -1;
+				}
+				for (j = 0; j < ppath->numentry; j++) {
+					if (pdr_error != 0  ||  !GetLine(pdr)) {
+						return -1;
+					}
+					ptok = pdr->linebuf;
+					pgrad->PositionRatio = GetNextValue(&ptok);
+					pgrad->Color         = GetNextValue(&ptok);
+					pgrad++;
+				}
+			}
+		}
+		
+		/* アンカーデータの読み込み */
+		panchor = ppath->anchor = (ANCHOR *)calloc(ppath->NumAnc + 3, sizeof(ANCHOR));
 		if (!panchor) {
-			FreePdr(pdr);
 			return -1;
 		}
 
 		for (j = 0; j <= ppath->NumAnc; j++) {
 			panchor++;
-			if (pdrerror != 0 || !GetLine(pdr)) {
-				FreePdr(pdr);
+			if (pdr_error != 0 || !GetLine(pdr)) {
 				return -1;
 			}
 			ptok = pdr->linebuf;
-			panchor->flgAnchor = GetNextValue(&ptok, 0);
-			panchor->x = GetNextValue(&ptok, 0);
-			panchor->y = GetNextValue(&ptok, 0);
+			panchor->flgAnchor = GetNextValue(&ptok);
+			panchor->x = GetNextValue(&ptok);
+			panchor->y = GetNextValue(&ptok);
 		}
 		if (ppath->flgClosePath == 0) {
 			/* パスが閉じていなければ両端はオンカーブアンカー */
@@ -425,11 +490,10 @@ static int PdrReadData(PDR *pdr)
 				pdr->compolist.compo[index].compoid     = ppath->CompoID;
 				pdr->compolist.compo[index].numpath     = 1;
 				pdr->compolist.compo[index].fillid      = -1;
-				pdr->compolist.compo[index].pathlist    = (int *)malloc(sizeof(int) * pdr->NumPath);
+				pdr->compolist.compo[index].pathlist    = (int *)calloc(pdr->NumPath, sizeof(int));
 				pdr->compolist.compo[index].pathlist[0] = i;
 				pdr->compolist.max++;
 				if (!pdr->compolist.compo[index].pathlist) {
-					FreePdr(pdr);
 					return -1;
 				}
 			}
@@ -437,7 +501,8 @@ static int PdrReadData(PDR *pdr)
 				pdr->compolist.compo[index].pathlist[pdr->compolist.compo[index].numpath] = i;
 				pdr->compolist.compo[index].numpath++;
 			}
-			if (pdr->compolist.compo[index].fillid == -1 && ppath->FillMode != 0) {
+			/* 同じ複合パスIDで一番手前にある塗りが、同じ複合パス内で塗りのあるものの塗りになる */
+			if (pdr->compolist.compo[index].fillid == -1  &&  ppath->FillMode != 0) {
 				pdr->compolist.compo[index].fillid = i;
 			}
 		}
@@ -452,22 +517,26 @@ static int PdrWriteShape(PDR *pdr)
 {
 	int i, j;
 
+	int flgClosePath, LineWidth, LineMode, LineColor, FillMode, FillColor;
+	int GradCenterX, GradCenterY, GradAngle, GradColor;
+	double GradRatioX, GradRatioY;
+	int flgCompounded, CompoID;
+	int NumAnc;
+	int compo_pathid = -1, compo_index = 0;
+
+	SWFGradient gradient;
+	SWFFillStyle fill;
 	SWFFillStyle compofill = NULL;
 
 	PATH *ppath;
+	ANCHOR *anchor;
+	GRADENTRY *grad;
+
+	/* SWFShapeオブジェクト削除時に関連オブジェクトも削除することを指示 */
+	SWFShape_setWhole(pdr->shape);
 
 	/* パス情報をセット */
 	for (i = 0; i < pdr->NumPath; i++) {
-		int flgClosePath, LineWidth, LineMode, LineColor, FillMode, FillColor;
-		int GradCenterX, GradCenterY, GradAngle, GradColor;
-		double GradRatio;
-		int flgCompounded, CompoID;
-		int NumAnc;
-
-		SWFGradient gradient;
-		SWFFillStyle fill;
-		ANCHOR *anchor;
-
 		ppath = &pdr->pathlist.path[i];
 
 		/* 処理済みのパスはスキップ(複合パス対策) */
@@ -485,7 +554,8 @@ static int PdrWriteShape(PDR *pdr)
 		GradCenterX   = ppath->GradCenterX;
 		GradCenterY   = ppath->GradCenterY;
 		GradAngle     = ppath->GradAngle;
-		GradRatio     = ppath->GradRatio;
+		GradRatioX    = ppath->GradRatioX;
+		GradRatioY    = ppath->GradRatioY;
 		GradColor     = ppath->GradColor;
 		flgCompounded = ppath->flgCompounded;
 		CompoID       = ppath->CompoID;
@@ -493,7 +563,7 @@ static int PdrWriteShape(PDR *pdr)
 		anchor = ppath->anchor;
 
 		/* 複合パスの途中でなければStateNewStylesを立てる(連続してたら新しくShapeRecordは作られない) */
-		if (pdr->flgmorph == 0 && pdr->compolist.index == 0) {
+		if (pdr->shape  &&  pdr->flgmorph == 0  &&  compo_index == 0) {
 			SWFShape_newStyles(pdr->shape);
 		}
 
@@ -502,126 +572,158 @@ static int PdrWriteShape(PDR *pdr)
 
 			index = FindCompo(&pdr->compolist, CompoID);
 			if (index < 0) {
-				FreePdr(pdr);
 				return -1;
 			}
-			if (pdr->compolist.compo[index].fillid != i && FillMode != 0) {
+			if (pdr->compolist.compo[index].fillid != i  &&  FillMode != 0) {
 				FillMode = -1;
 			}
-			if (pdr->compolist.index == 0) {
-				pdr->compolist.pathid = i;
+			if (compo_index == 0) {
+				compo_pathid = i;
 			}
-			if (pdr->compolist.index == pdr->compolist.compo[index].numpath - 1) {
-				i = pdr->compolist.pathid;
-				pdr->compolist.pathid = -1;
-				pdr->compolist.index = 0;
+			if (compo_index == pdr->compolist.compo[index].numpath - 1) {
+				i = compo_pathid;
+				compo_pathid = -1;
+				compo_index = 0;
 			}
 			else {
-				i = pdr->compolist.compo[index].pathlist[++pdr->compolist.index] - 1;	/* 次の複合パス */
+				i = pdr->compolist.compo[index].pathlist[++compo_index] - 1;	/* 次の複合パス */
 			}
 		}
 
-		/* 塗りを設定 */
-		if (FillMode > 0) {
-			if (FillMode == 1) {	/* ベタ */
-				fill = SWFShape_addSolidFillStyle(
-						pdr->shape,
+		if (pdr->shape) {
+			/* 塗りを設定 */
+			if (FillMode > 0) {
+				if (FillMode == 1) {	/* ベタ */
+					fill = SWFShape_addSolidFillStyle(
+							pdr->shape,
+							(byte)( FillColor        & 0xff),
+							(byte)((FillColor >> 8 ) & 0xff),
+							(byte)((FillColor >> 16) & 0xff),
+							(byte)((FillColor >> 24) & 0xff)
+						);
+				}
+				else {	/* グラデーション */
+					byte flags = 0;
+					double rot1, rot2;
+					rot1 = cos(GradAngle * M_PI / 180);
+					rot2 = sin(GradAngle * M_PI / 180);
+
+					gradient = newSWFGradient();
+					SWFGradient_addEntry(
+						gradient,
+						0,
 						(byte)( FillColor        & 0xff),
 						(byte)((FillColor >> 8 ) & 0xff),
 						(byte)((FillColor >> 16) & 0xff),
 						(byte)((FillColor >> 24) & 0xff)
 					);
+					if (FillMode == 3) {	/* 線形グラデ2 */
+						flags = SWFFILL_LINEAR_GRADIENT;
+						grad = ppath->grad;
+						for (j = 0; j < ppath->numentry; j++) {
+							SWFGradient_addEntry(
+								gradient,
+								(float)(grad->PositionRatio / 2) / 255,
+								(byte)( grad->Color        & 0xff),
+								(byte)((grad->Color >> 8 ) & 0xff),
+								(byte)((grad->Color >> 16) & 0xff),
+								(byte)((grad->Color >> 24) & 0xff)
+							);
+							grad++;
+						}
+						SWFGradient_addEntry(
+							gradient,
+							(float)128 / 255,
+							(byte)( GradColor        & 0xff),
+							(byte)((GradColor >> 8 ) & 0xff),
+							(byte)((GradColor >> 16) & 0xff),
+							(byte)((GradColor >> 24) & 0xff)
+						);
+						grad--;
+						for (j = 0; j < ppath->numentry; j++) {
+							SWFGradient_addEntry(
+								gradient,
+								(float)(255 - grad->PositionRatio / 2) / 255,
+								(byte)( grad->Color        & 0xff),
+								(byte)((grad->Color >> 8 ) & 0xff),
+								(byte)((grad->Color >> 16) & 0xff),
+								(byte)((grad->Color >> 24) & 0xff)
+							);
+							grad--;
+						}
+						SWFGradient_addEntry(
+							gradient,
+							1.0,
+							(byte)( FillColor        & 0xff),
+							(byte)((FillColor >> 8 ) & 0xff),
+							(byte)((FillColor >> 16) & 0xff),
+							(byte)((FillColor >> 24) & 0xff)
+						);
+					}
+					else {
+						if (FillMode == 2) {	/* 線形グラデ1 */
+							flags = SWFFILL_LINEAR_GRADIENT;
+						}
+						else if (FillMode == 4) {	/* 円形グラデ */
+							flags = SWFFILL_RADIAL_GRADIENT;
+						}
+						grad = ppath->grad;
+						for (j = 0; j < ppath->numentry; j++) {
+							SWFGradient_addEntry(
+								gradient,
+								(float)grad->PositionRatio / 255,
+								(byte)( grad->Color        & 0xff),
+								(byte)((grad->Color >> 8 ) & 0xff),
+								(byte)((grad->Color >> 16) & 0xff),
+								(byte)((grad->Color >> 24) & 0xff)
+							);
+							grad++;
+						}
+						SWFGradient_addEntry(
+							gradient,
+							1.0,
+							(byte)( GradColor        & 0xff),
+							(byte)((GradColor >> 8 ) & 0xff),
+							(byte)((GradColor >> 16) & 0xff),
+							(byte)((GradColor >> 24) & 0xff)
+						);
+					}
+					fill = SWFShape_addGradientFillStyle(pdr->shape, gradient, flags);
+					/* 変換行列の設定 */
+					SWFMatrix_set(
+						SWFFillStyle_getMatrix(fill),
+						GradRatioX * rot1,
+						GradRatioX * rot2,
+						GradRatioY * -rot2,
+						GradRatioY * rot1,
+						GradCenterX - pdr->ClipX,
+						GradCenterY - pdr->ClipY
+					);
+				}
+				compofill = fill;
 			}
-			else {	/* グラデーション */
-				byte flags = 0;
-				double rot1 = cos(GradAngle * M_PI / 180);
-				double rot2 = sin(GradAngle * M_PI / 180);
+			else if (FillMode < 0) {
+				fill = compofill;
+			}
+			else if (FillMode == 0) {
+				fill = NULL;
+			}
+			SWFShape_setLeftFillStyle(pdr->shape, fill);
 
-				gradient = newSWFGradient();
-				SWFGradient_addEntry(
-					gradient,
-					0,
-					(byte)( FillColor        & 0xff),
-					(byte)((FillColor >> 8 ) & 0xff),
-					(byte)((FillColor >> 16) & 0xff),
-					(byte)((FillColor >> 24) & 0xff)
-				);
-				if (FillMode == 2) {	/* 線形グラデ1 */
-					flags = SWFFILL_LINEAR_GRADIENT;
-					SWFGradient_addEntry(
-						gradient,
-						1.0,
-						(byte)( GradColor        & 0xff),
-						(byte)((GradColor >> 8 ) & 0xff),
-						(byte)((GradColor >> 16) & 0xff),
-						(byte)((GradColor >> 24) & 0xff)
-					);
-				}
-				if (FillMode == 3) {	/* 線形グラデ2 */
-					flags = SWFFILL_LINEAR_GRADIENT;
-					SWFGradient_addEntry(
-						gradient,
-						0.5,
-						(byte)( GradColor        & 0xff),
-						(byte)((GradColor >> 8 ) & 0xff),
-						(byte)((GradColor >> 16) & 0xff),
-						(byte)((GradColor >> 24) & 0xff)
-					);
-					SWFGradient_addEntry(
-						gradient,
-						1.0,
-						(byte)( FillColor        & 0xff),
-						(byte)((FillColor >> 8 ) & 0xff),
-						(byte)((FillColor >> 16) & 0xff),
-						(byte)((FillColor >> 24) & 0xff)
-					);
-				}
-				if (FillMode == 4) {	/* 円形グラデ */
-					flags = SWFFILL_RADIAL_GRADIENT;
-					SWFGradient_addEntry(
-						gradient,
-						1.0,
-						(byte)( GradColor        & 0xff),
-						(byte)((GradColor >> 8 ) & 0xff),
-						(byte)((GradColor >> 16) & 0xff),
-						(byte)((GradColor >> 24) & 0xff)
-					);
-				}
-				fill = SWFShape_addGradientFillStyle(pdr->shape, gradient, flags);
-				/* 変換行列の設定 */
-				SWFMatrix_set(
-					SWFFillStyle_getMatrix(fill),
-					GradRatio * rot1,
-					GradRatio * rot2,
-					GradRatio * -rot2,
-					GradRatio * rot1,
-					GradCenterX - pdr->ClipX,
-					GradCenterY - pdr->ClipY
+			/* 線の色を設定(閉じていない時は非表示フラグが立っていても表示する仕様らしい) */
+			if (LineMode != 0 || flgClosePath == 0) {
+				SWFShape_setLineStyle(
+					pdr->shape,
+					LineWidth,
+					(byte)( LineColor        & 0xff),
+					(byte)((LineColor >> 8 ) & 0xff),
+					(byte)((LineColor >> 16) & 0xff),
+					(byte)((LineColor >> 24) & 0xff)
 				);
 			}
-			compofill = fill;
-		}
-		else if (FillMode < 0) {
-			fill = compofill;
-		}
-		else {
-			fill = NULL;
-		}
-		SWFShape_setLeftFillStyle(pdr->shape, fill);
-
-		/* 線の色を設定(閉じていない時は非表示フラグが立っていても表示する仕様らしい) */
-		if (LineMode != 0 || flgClosePath == 0) {
-			SWFShape_setLineStyle(
-				pdr->shape,
-				LineWidth,
-				(byte)( LineColor        & 0xff),
-				(byte)((LineColor >> 8 ) & 0xff),
-				(byte)((LineColor >> 16) & 0xff),
-				(byte)((LineColor >> 24) & 0xff)
-			);
-		}
-		else {
-			SWFShape_hideLine(pdr->shape);
+			else {
+				SWFShape_hideLine(pdr->shape);
+			}
 		}
 
 		/* アンカー情報をセット */
@@ -648,10 +750,17 @@ static int PdrWriteShape(PDR *pdr)
 					dx = x2;
 					dy = y2;
 				}
-				SWFShape_moveScaledPenTo(pdr->shape, dx - pdr->ClipX, dy - pdr->ClipY);
-				/*printf("moveTo(%d, %d)\n", dx, dy);*/
+
+				if (pdr->shape) {
+					SWFShape_moveScaledPenTo(pdr->shape, dx - pdr->ClipX, dy - pdr->ClipY);
+					/*printf("moveTo(%d, %d)\n", dx, dy);*/
+				}
+				else {
+					pdr->size[0] = max(dx - pdr->ClipX, pdr->size[0]);
+					pdr->size[1] = max(dy - pdr->ClipY, pdr->size[1]);
+				}
 			}
-			else if (j != NumAnc + 1 || flgClosePath != 0) {
+			else if (j != NumAnc + 1  ||  flgClosePath != 0) {
 				if (flgAnchor1 == 0) {
 					if (flgAnchor2 == 0) {
 						dx = x2;
@@ -661,8 +770,15 @@ static int PdrWriteShape(PDR *pdr)
 						dx = x1;
 						dy = y1;
 					}
-					SWFShape_drawScaledLineTo(pdr->shape, dx - pdr->ClipX, dy - pdr->ClipY);
-					/*printf("lineTo(%d, %d)\n", dx, dy);*/
+
+					if (pdr->shape) {
+						SWFShape_drawScaledLineTo(pdr->shape, dx - pdr->ClipX, dy - pdr->ClipY);
+						/*printf("lineTo(%d, %d)\n", dx, dy);*/
+					}
+					else {
+						pdr->size[0] = max(dx - pdr->ClipX + LineWidth, pdr->size[0]);
+						pdr->size[1] = max(dy - pdr->ClipY + LineWidth, pdr->size[1]);
+					}
 				}
 				else {
 					if (flgAnchor2 == 0) {
@@ -673,8 +789,15 @@ static int PdrWriteShape(PDR *pdr)
 						dx = (x1 + x2 + 1) / 2;
 						dy = (y1 + y2 + 1) / 2;
 					}
-					SWFShape_drawScaledCurveTo(pdr->shape, x1 - pdr->ClipX, y1 - pdr->ClipY, dx - pdr->ClipX, dy - pdr->ClipY);
-					/*printf("curveTo(%d, %d, %d, %d)\n", x1, y1, dx, dy);*/
+
+					if (pdr->shape) {
+						SWFShape_drawScaledCurveTo(pdr->shape, x1 - pdr->ClipX, y1 - pdr->ClipY, dx - pdr->ClipX, dy - pdr->ClipY);
+						/*printf("curveTo(%d, %d, %d, %d)\n", x1, y1, dx, dy);*/
+					}
+					else {
+						pdr->size[0] = max(x1 - pdr->ClipX + LineWidth, max(dx - pdr->ClipX + LineWidth, pdr->size[0]));
+						pdr->size[1] = max(y1 - pdr->ClipY + LineWidth, max(dy - pdr->ClipY + LineWidth, pdr->size[1]));
+					}
 				}
 			}
 		}
@@ -685,28 +808,35 @@ static int PdrWriteShape(PDR *pdr)
 	return 0;
 }
 
-int SWFShape_loadPdr(SWFShape shape, int rect[], char *filename, int flag, int size, float orgX, float orgY)
+#ifdef PDR_USE_SWFINPUT
+int SWFShape_loadPdr(SWFShape shape, int size[], SWFInput input, int flag, float orgX, float orgY)
+#else
+int SWFShape_loadPdr(SWFShape shape, int size[], char *filename, int flag, int pdrsize, float orgX, float orgY)
+#endif
 {
-	PDR pdr;
 #ifdef MING_02A
 	float scale = Ming_scale;
 #else
 	float scale = Ming_getScale();
 #endif
-	pdreol   = 0;
-	pdrerror = 0;
+	PDR pdr;
+
+	pdr_eol   = 0;
+	pdr_error = 0;
 
 	memset(&pdr, 0, sizeof(PDR));
 	pdr.flgmorph = flag & PDR_MORPH;
 	pdr.linemax  = LINEMAX_DEFAULT;
-	pdr.rect     = rect;
 	pdr.shape    = shape;
 
-	if (size) {
+#ifdef PDR_USE_SWFINPUT
+	pdr.input = input;
+#else
+	if (pdrsize) {
 		pdr.src = (void *)&filename;
 		GetChar = GetCharFromBuf;
 		FreeLine = FreeLineBuf;
-		pdrlimit = size;
+		pdr_limit = pdrsize;
 	}
 	else {
 		FILE *fp;
@@ -718,6 +848,7 @@ int SWFShape_loadPdr(SWFShape shape, int rect[], char *filename, int flag, int s
 		GetChar = GetCharFromFile;
 		FreeLine = FreeLineFile;
 	}
+#endif
 
 	pdr.linebuf = malloc(pdr.linemax + 1);
 	if (!pdr.linebuf) {
@@ -730,9 +861,12 @@ int SWFShape_loadPdr(SWFShape shape, int rect[], char *filename, int flag, int s
 		return -1;
 	}
 
-	if (flag & PDR_GETRECTONLY) {
+	size[0] = pdr.size[0];
+	size[1] = pdr.size[1];
+
+	if (flag & PDR_GETSIZEONLY) {
 		if (pdr.ispdclip != 0) {
-			pdr.shape = newSWFShape();
+			pdr.shape = NULL;
 		}
 		else {
 			FreePdr(&pdr);
@@ -748,26 +882,7 @@ int SWFShape_loadPdr(SWFShape shape, int rect[], char *filename, int flag, int s
 	pdr.ClipX += orgX * scale;
 	pdr.ClipY += orgY * scale;
 
-	/* 複合パスの情報を管理する。要素数は高々NumPath個 */
-	pdr.compolist.max = 0;
-	pdr.compolist.pathid = -1;
-	pdr.compolist.index = 0;
-	pdr.compolist.compo = (COMPO *)malloc(sizeof(COMPO) * pdr.NumPath);
-
-	pdr.pathlist.max = 0;
-	pdr.pathlist.path = (PATH *)malloc(sizeof(PATH) * pdr.NumPath);
-
-	if (!pdr.compolist.compo || !pdr.pathlist.path) {
-		FreePdr(&pdr);
-		return -1;
-	}
-
-	if (PdrReadData(&pdr) != 0) {
-		FreePdr(&pdr);
-		return -1;
-	}
-
-	if (PdrWriteShape(&pdr) != 0) {
+	if (PdrReadData(&pdr) != 0  ||  PdrWriteShape(&pdr) != 0) {
 		FreePdr(&pdr);
 		return -1;
 	}
@@ -775,14 +890,13 @@ int SWFShape_loadPdr(SWFShape shape, int rect[], char *filename, int flag, int s
 	FreePdr(&pdr);
 
 	if (pdr.ispdclip != 0) {
-		rect[0] = SWFCharacter_getScaledWidth(CHARACTER(pdr.shape))  / scale;
-		rect[1] = SWFCharacter_getScaledHeight(CHARACTER(pdr.shape)) / scale;
-		if (flag & PDR_GETRECTONLY) {
-#ifdef MING_02A
-			destroySWFShape(BLOCK(pdr.shape));
-#else
-			destroySWFShape(pdr.shape);
-#endif
+		if (pdr.shape) {
+			size[0] = SWFCharacter_getScaledWidth(CHARACTER(pdr.shape))  / scale;
+			size[1] = SWFCharacter_getScaledHeight(CHARACTER(pdr.shape)) / scale;
+		}
+		else {
+			size[0] = pdr.size[0] / scale;
+			size[1] = pdr.size[1] / scale;
 		}
 	}
 

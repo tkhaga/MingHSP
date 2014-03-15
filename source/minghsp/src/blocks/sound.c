@@ -42,7 +42,7 @@ struct SWFSound_s
 	SWFInput input;
 	byte *data;
 
-	int PCMsize;	/* To deal with WAV file - THAGA */
+	int realsize;	/* To deal with tagged files */
 };
 
 
@@ -57,12 +57,11 @@ soundDataSize(SWFSound sound)
 		 (sound->flags&SWF_SOUND_COMPRESSION) == SWF_SOUND_NOT_COMPRESSED_LE)
 	{
 		int sampleCount;
-		if (sound->PCMsize)
+		if (sound->realsize)
 		{
-			sampleCount = sound->PCMsize;
+			sampleCount = sound->realsize;
 		}
-		else
-		{
+		else {
 			sampleCount = SWFInput_length(sound->input);
 		}
 
@@ -127,19 +126,19 @@ writeSWFSoundToStream(SWFBlock block, SWFByteOutputMethod method, void *data)
 	methodWriteUInt16(CHARACTERID(sound), method, data);
 	method(sound->flags, data);
 
-	if (sound->PCMsize)
+	if (sound->realsize > 0)
 	{
-		l = sound->PCMsize;
+		l = sound->realsize;
 	}
-	else
-	{
+	else {
 		l = SWFInput_length(sound->input);
 	}
 
 	methodWriteUInt32(soundDataSize(sound), method, data);
 
 	if ( (sound->flags & SWF_SOUND_COMPRESSION) == SWF_SOUND_MP3_COMPRESSED )
-		methodWriteUInt16(SWFSOUND_INITIAL_DELAY, method, data);	// XXX - delay?
+		//methodWriteUInt16(SWFSOUND_INITIAL_DELAY, method, data);	// XXX - delay?
+		methodWriteUInt16(0, method, data);	/* above is not good */
 
 	/* write samples */
 	for ( i=0; i<l; ++i )
@@ -153,12 +152,11 @@ completeDefineSWFSoundBlock(SWFBlock block)
 	int l;
 	SWFSound sound = (SWFSound)block;
 
-	if (sound->PCMsize)
+	if (sound->realsize > 0)
 	{
-		l = sound->PCMsize;
+		l = sound->realsize;
 	}
-	else
-	{
+	else {
 		l = SWFInput_length(sound->input);
 	}
 
@@ -213,62 +211,56 @@ newSWFSound_fromInput(SWFInput input, byte flags)
 	sound->input = input;
 	sound->flags = flags;
 
-/* read RIFF WAVE header - THAGA */
-	/* "RIFF" */
-	valid = (SWFInput_getUInt32(input) != 0x46464952);
+	valid = (SWFInput_getUInt32(input) != 0x46464952);	/* "RIFF" */
 	SWFInput_seek(input, 4, SEEK_CUR);
-	/* "WAVE" */
-	valid += (SWFInput_getUInt32(input) != 0x45564157);
-	if (valid == 0)
-	{
+	valid += (SWFInput_getUInt32(input) != 0x45564157);	/* "WAVE" */
+	if (valid == 0) {
 		byte flags2 = 0;
-		/* "fmt " */
-		if (SWFInput_getUInt32(input) != 0x20746d66)
+		if (SWFInput_getUInt32(input) != 0x20746d66) {	/* "fmt " */
 			goto notwave;
+		}
 		valid = SWFInput_getUInt32(input);
-		if (SWFInput_getUInt16(input) != 1)
+		if (SWFInput_getUInt16(input) != 1) {
 			goto notwave;
-		if (SWFInput_getUInt16(input) == 2)
+		}
+		if (SWFInput_getUInt16(input) == 2) {
 			flags2 |= SWF_SOUND_STEREO;
+		}
 		switch (SWFInput_getUInt32(input))
 		{
-			case 11025:
-				flags2 |= SWF_SOUND_11KHZ;
-				break;
-			case 22050:
-				flags2 |= SWF_SOUND_22KHZ;
-				break;
-			case 44100:
-				flags2 |= SWF_SOUND_44KHZ;
-				break;
-			default:
-				break;
+		case 11025:
+			flags2 |= SWF_SOUND_11KHZ;
+			break;
+		case 22050:
+			flags2 |= SWF_SOUND_22KHZ;
+			break;
+		case 44100:
+			flags2 |= SWF_SOUND_44KHZ;
+			break;
+		default:
+			break;
 		}
 		SWFInput_seek(input, 6, SEEK_CUR);
-		if (SWFInput_getUInt16(input) == 16)
+		if (SWFInput_getUInt16(input) == 16) {
 			flags2 |= SWF_SOUND_16BITS;
+		}
 		SWFInput_seek(input, valid - 16, SEEK_CUR);
-		/* "fact" */
-		if (SWFInput_getUInt32(input) == 0x74636166)
-		{
+		if (SWFInput_getUInt32(input) == 0x74636166) {	/* "fact" */
 			SWFInput_seek(input, 8, SEEK_CUR);
 		}
-		else
-		{
+		else {
 			SWFInput_seek(input, -4, SEEK_CUR);
 		}
-		/* "data" */
-		if (SWFInput_getUInt32(input) != 0x61746164)
+		if (SWFInput_getUInt32(input) != 0x61746164) {	/* "data" */
 			goto notwave;
-		/*input->length = SWFInput_getUInt32(input); */
-		sound->PCMsize = SWFInput_getUInt32(input);
+		}
+		sound->realsize = SWFInput_getUInt32(input);
 		sound->flags = flags2;
 	}
-	else
-	{
+	else {
 notwave:
 		SWFInput_seek(input, 0, SEEK_SET);
-		sound->PCMsize = 0;
+		sound->realsize = 0;
 	}
 
 	return sound;

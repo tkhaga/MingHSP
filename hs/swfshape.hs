@@ -11,8 +11,8 @@ SWFShapeオブジェクト操作命令
 
 %inst
 新しいSWFShapeオブジェクトを作成します。
-SWFShapeオブジェクトはベクタ画像を扱うオブジェクトであり、
-s_で始まる命令群で操作します。
+SWFShapeオブジェクトはベクタ画像を扱うオブジェクトであり、s_で始まる命令群で操作します。
+各命令における描画開始点であるペンの位置は(0, 0)に初期化されます。
 
 通常、これらの命令の操作対象のオブジェクトはsel_s命令で選択しますが、
 操作対象のオブジェクトがまだ選択されていないか0が選択されている場合は自動的に
@@ -255,7 +255,7 @@ s_setLeftFill
 
 %index
 s_movePenTo
-描画開始点を移動(絶対座標指定)
+ペンの位置を移動(絶対座標指定)
 
 %prm
 f1, f2
@@ -266,8 +266,8 @@ f2 :    〃   Y      〃
 SWFShapeオブジェクト操作命令
 
 %inst
-選択されたSWFShapeオブジェクトに対する描画命令群の描画開始点を指定された座標に移動します。
-HSP2では、パラメータにはfを付けるかmhsp_float命令で変換した値を指定する必要があります。
+選択されたSWFShapeオブジェクトのペンの位置を指定された座標に移動します。
+HSP2では、パラメータには数字の後にfを付けたものかmhsp_float命令で変換した値を指定する必要があります。
 
 %href
 sel_s
@@ -291,7 +291,7 @@ s_getPen
 
 %index
 s_movePen
-描画開始点を移動(相対座標指定)
+ペンの位置を移動(相対座標指定)
 
 %prm
 f1, f2
@@ -302,8 +302,8 @@ f2 : Y          〃
 SWFShapeオブジェクト操作命令
 
 %inst
-選択されたSWFShapeオブジェクトに対する描画命令群の描画開始点を指定された量だけ移動します。
-HSP2では、パラメータにはfを付けるかmhsp_float命令で変換した値を指定する必要があります。
+選択されたSWFShapeオブジェクトのペンの位置を指定された量だけ移動します。
+HSP2では、パラメータには数字の後にfを付けたものかmhsp_float命令で変換した値を指定する必要があります。
 
 %href
 sel_s
@@ -327,9 +327,79 @@ s_getPen
 
 %index
 s_drawLineTo
-線を引く(絶対座標指定)
+直線を引く(絶対座標指定)
 
 %prm
 f1, f2
 f1 : 描画終了点のX座標(ピクセル)
 f2 :      〃     Y 〃
+
+%group
+SWFShapeオブジェクト操作命令
+
+%inst
+選択されたSWFShapeオブジェクトに対して現在のペンの位置からパラメータで指定された座標まで
+s_setLine命令で指定した太さと色で直線を引きます。
+HSP2では、パラメータにはfを付けたものかmhsp_float命令で変換した値を指定する必要があります。
+
+%href
+sel_s
+mhsp_float
+ming_setScale
+SWFShape
+s_setLine
+s_movePenTo
+s_movePen
+s_drawLine
+
+
+%index
+s_drawLine
+直線を引く(相対座標指定)
+
+%prm
+f1, f2
+f1 : X方向への描画量(ピクセル)
+f2 : Y          〃
+
+%inst
+選択されたSWFShapeオブジェクトに対して現在のペンの位置からパラメータで指定しただけ移動した先まで
+s_setLine命令で指定した太さと色の直線を引きます。
+HSP2では、パラメータにはfを付けたものかmhsp_float命令で変換した値を指定する必要があります。
+
+%href
+sel_s
+mhsp_float
+ming_setScale
+SWFShape
+s_setLine
+s_movePenTo
+s_movePen
+s_drawLineTo
+
+
+%index
+s_drawCurveTo
+曲線を引く(絶対座標指定)
+
+%prm
+f1, f2, f3, f4
+f1 : コントロールポイントのX座標
+f2 :          〃           Y
+f3 : 描画終了点のX座標(ピクセル)
+f4 :      〃     Y 〃
+
+%inst
+選択されたSWFShapeオブジェクトに対して現在のペンの位置から
+s_setLine命令で指定した太さと色の二次ベジエ曲線を引きます。
+HSP2では、パラメータにはfを付けたものかmhsp_float命令で変換した値を指定する必要があります。
+
+%href
+sel_s
+mhsp_float
+ming_setScale
+SWFShape
+s_setLine
+s_movePenTo
+s_movePen
+s_drawLineTo

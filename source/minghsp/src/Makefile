@@ -24,46 +24,56 @@ COMPILEROFILES = actioncompiler/compile.o \
 		 actioncompiler/compileaction.o \
 		 actioncompiler/assembler.o
 
-MHSP = toutf8.o formats.o
+MHSP = minghsp.o toutf8.o formats.o mhspobj.o mhsputil.o mhsperror.o
 
 TARGET = minghsp.hpi
 
-all: full light superlight
+all: full aedition bedition light
 
 # saveFP and restFP on OS X can be retrieved as such:
 # ar -x /usr/lib/libcc_dynamic.a lib/macosx-fpsave.o
 
-CFLAGS = -g -Os -I.
+CFLAGS += -Os -DPDR_USE_SWFINPUT
 
 full: $(OFILES) $(MHSP)
 	rm -f blocks/bitmap.o
-	rm -f minghsp.o
+	rm -f mhspaction.o
 	cd blocks && $(MAKE) CFLAGS="$(CFLAGS) -DUSE_PNG=1 -DUSE_GIF=1 -DUSE_BMP=1 -I.."
 	cd actioncompiler && $(MAKE)
 	ar r libming.a blocks/*.o $(OFILES) $(COMPILEROFILES)
-	$(CC) -c minghsp.c $(CFLAGS)
+	$(CC) -c mhspaction.c $(CFLAGS)
 	windres minghsp.rc -o minghsp.coff
-	dllwrap --def minghsp.def -s -mwindows -o minghsp.hpi minghsp.o $(MHSP) minghsp.coff libming.a -lungif -lpng -lz
+	dllwrap --def minghsp.def -s -mwindows -o minghsp.hpi mhspaction.o $(MHSP) minghsp.coff libming.a -lungif -lpng -lz
+
+aedition: $(OFILES) $(MHSP)
+	rm -f blocks/bitmap.o
+	rm -f mhspaction.o
+	cd blocks && $(MAKE) CFLAGS="$(CFLAGS) -DUSE_PNG=0 -DUSE_GIF=0 -DUSE_BMP=0 -I.."
+	cd actioncompiler && $(MAKE)
+	ar r libming.a blocks/*.o $(OFILES) $(COMPILEROFILES)
+	$(CC) -c mhspaction.c $(CFLAGS)
+	windres minghsp.rc -o minghsp.coff
+	dllwrap --def minghsp.def -s -mwindows -o minghspa.hpi mhspaction.o $(MHSP) minghsp.coff libming.a -lz
+
+bedition: $(OFILES) $(MHSP)
+	rm -f blocks/bitmap.o
+	rm -f mhspaction.o
+	cd blocks && $(MAKE) CFLAGS="$(CFLAGS) -DUSE_PNG=1 -DUSE_GIF=1 -DUSE_BMP=1 -I.."
+	cd actioncompiler && $(MAKE)
+	ar r libming.a blocks/*.o $(OFILES) $(COMPILEROFILES)
+	$(CC) -c mhspaction.c $(CFLAGS) -DNOACTION
+	windres minghsp.rc -o minghsp.coff
+	dllwrap --def minghsp.def -s -mwindows -o minghspb.hpi mhspaction.o $(MHSP) minghsp.coff libming.a -lungif -lpng -lz
 
 light: $(OFILES) $(MHSP)
 	rm -f blocks/bitmap.o
-	rm -f minghsp.o
+	rm -f mhspaction.o
 	cd blocks && $(MAKE) CFLAGS="$(CFLAGS) -DUSE_PNG=0 -DUSE_GIF=0 -DUSE_BMP=0 -I.."
 	cd actioncompiler && $(MAKE)
 	ar r libming.a blocks/*.o $(OFILES) $(COMPILEROFILES)
-	$(CC) -c minghsp.c $(CFLAGS)
+	$(CC) -c mhspaction.c $(CFLAGS) -DNOACTION
 	windres minghsp.rc -o minghsp.coff
-	dllwrap --def minghsp.def -s -mwindows -o minghspl.hpi minghsp.o $(MHSP) minghsp.coff libming.a -lz
-
-superlight: $(OFILES) $(MHSP)
-	rm -f blocks/bitmap.o
-	rm -f minghsp.o
-	cd blocks && $(MAKE) CFLAGS="$(CFLAGS) -DUSE_PNG=0 -DUSE_GIF=0 -DUSE_BMP=0 -I.."
-	cd actioncompiler && $(MAKE)
-	ar r libming.a blocks/*.o $(OFILES) $(COMPILEROFILES)
-	$(CC) -c minghsp.c $(CFLAGS) -DNOACTION
-	windres minghsp.rc -o minghsp.coff
-	dllwrap --def minghsp.def -s -mwindows -o minghspsl.hpi minghsp.o $(MHSP) minghsp.coff libming.a -lz
+	dllwrap --def minghsp.def -s -mwindows -o minghspl.hpi mhspaction.o $(MHSP) minghsp.coff libming.a -lz
 
 dynamic: $(SHAREDLIB)
 

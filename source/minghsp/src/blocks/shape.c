@@ -101,10 +101,12 @@ struct SWFShape_s
 	int ypos;
 	SWFLineStyle **lines;
 	SWFFillStyle **fills;
-	SWFLineStyle *lines2;
-	SWFFillStyle *fills2;
+	SWFLineStyle *_lines;
+	SWFFillStyle *_fills;
 	unsigned short *nLines;
 	unsigned short *nFills;
+	unsigned short _nLines;
+	unsigned short _nFills;
 	unsigned short nLines2;
 	unsigned short nFills2;
 	short lineWidth;
@@ -113,12 +115,44 @@ struct SWFShape_s
 
 	BOOL isNewStylesLast;
 	BOOL isUsingNewStyles;
+	BOOL isWhole;	/* when it is set non-zero, destroySWFShape() destroys related objects at the same time */
 
 #if TRACK_ALLOCS
 	/* memory node for garbage collection */
 	mem_node *gcnode;
 #endif
 };
+
+static void
+freeStyles(SWFShape shape)
+{
+	int i;
+
+	for ( i=0; i<*shape->nFills; ++i )
+	{
+		SWFMatrix matrix = SWFFillStyle_getMatrix((*shape->fills)[i]);
+
+		if ( matrix != NULL )
+			destroySWFMatrix(matrix);
+
+		/* gradients and bitmaps are destroyed separately */
+
+		if (shape->isWhole) {
+			destroySWFFillStyleRelated((*shape->fills)[i]);
+		}
+
+		free((*shape->fills)[i]);
+	}
+
+	if ( *shape->fills != NULL )
+		free(*shape->fills);
+
+	for ( i=0; i<*shape->nLines; ++i )
+		free((*shape->lines)[i]);
+
+	if ( *shape->lines != NULL )
+		free(*shape->lines);
+}
 
 static void
 SWFShape_writeShapeRecord(SWFShape shape, ShapeRecord record);
@@ -147,34 +181,17 @@ completeSWFShapeBlock(SWFBlock block)
 void
 destroySWFShape(SWFShape shape)
 {
-	int i, j;
-
 	destroySWFOutput(shape->out);
 
-	if (shape->isUsingNewStyles != TRUE) {
-		for ( i=0; i<*shape->nFills; ++i )
-		{
-			SWFMatrix matrix = SWFFillStyle_getMatrix((*shape->fills)[i]);
-
-			if ( matrix != NULL )
-				destroySWFMatrix(matrix);
-
-			/* gradients and bitmaps are destroyed separately */
-
-			free((*shape->fills)[i]);
-		}
-
-		if ( *shape->fills != NULL )
-			free(*shape->fills);
-
-		for ( i=0; i<*shape->nLines; ++i )
-			free((*shape->lines)[i]);
-
-		if ( *shape->lines != NULL )
-			free(*shape->lines);
-	}
+	shape->lines = &shape->_lines;
+	shape->fills = &shape->_fills;
+	shape->nLines = &shape->_nLines;
+	shape->nFills = &shape->_nFills;
+	freeStyles(shape);
 
 	if (shape->isEnded != TRUE) {
+		int i;
+
 		for ( i=0; i<shape->nRecords; ++i )
 		{
 			ShapeRecord record = shape->records[i];
@@ -182,26 +199,11 @@ destroySWFShape(SWFShape shape)
 			if (record.type == SHAPERECORD_STATECHANGE &&
 				 record.record.stateChange->flags & SWF_SHAPE_NEWSTYLEFLAG)
 			{
-				for ( j=0; i<record.record.stateChange->nFills; ++j )
-				{
-					SWFMatrix matrix = SWFFillStyle_getMatrix(record.record.stateChange->fills[j]);
-
-					if ( matrix != NULL )
-						destroySWFMatrix(matrix);
-
-					/* gradients and bitmaps are destroyed separately */
-
-					free(record.record.stateChange->fills[j]);
-				}
-
-				if ( record.record.stateChange->fills != NULL )
-					free(record.record.stateChange->fills);
-
-				for ( j=0; j<record.record.stateChange->nLines; ++j )
-					free(record.record.stateChange->lines[j]);
-
-				if ( record.record.stateChange->lines != NULL )
-					free(record.record.stateChange->lines);
+				shape->lines = &record.record.stateChange->lines;
+				shape->fills = &record.record.stateChange->fills;
+				shape->nLines = &record.record.stateChange->nLines;
+				shape->nFills = &record.record.stateChange->nFills;
+				freeStyles(shape);
 			}
 
 			free(record.record.stateChange); /* all in union are pointers */
@@ -236,24 +238,25 @@ newSWFShape()
 	CHARACTER(shape)->bounds = newSWFRect(0,0,0,0);
 
 	shape->records = NULL;
-	shape->lines = &shape->lines2;
-	shape->fills = &shape->fills2;
-	shape->lines2 = NULL;
-	shape->fills2 = NULL;
+	shape->lines = &shape->_lines;
+	shape->fills = &shape->_fills;
+	shape->_lines = NULL;
+	shape->_fills = NULL;
 
 	shape->nRecords = 0;
 	shape->xpos = 0;
 	shape->ypos = 0;
-	shape->nLines = &shape->nLines2;
-	shape->nFills = &shape->nFills2;
-	shape->nLines2 = 0;
-	shape->nFills2 = 0;
+	shape->nLines = &shape->_nLines;
+	shape->nFills = &shape->_nFills;
+	shape->_nLines = 0;
+	shape->_nFills = 0;
 	shape->lineWidth = 0;
 	shape->isMorph = FALSE;
 	shape->isEnded = FALSE;
 
 	shape->isNewStylesLast = FALSE;
 	shape->isUsingNewStyles = FALSE;
+	shape->isWhole = FALSE;
 
 	SWFOutput_writeUInt8(shape->out, 0); /* space for nFillBits, nLineBits */
 
@@ -310,10 +313,15 @@ SWFShape_end(SWFShape shape)
 
 	buffer = SWFOutput_getBuffer(shape->out);
 
-	if (shape->isUsingNewStyles == FALSE) {
-		buffer[0] =
-			(SWFOutput_numBits(shape->nFills2) << 4) + SWFOutput_numBits(shape->nLines2);
-	}
+	buffer[0] =
+		(SWFOutput_numBits(shape->_nFills) << 4) + SWFOutput_numBits(shape->_nLines);
+
+	shape->lines = &shape->_lines;
+	shape->fills = &shape->_fills;
+	shape->nLines = &shape->_nLines;
+	shape->nFills = &shape->_nFills;
+	shape->nLines2 = *shape->nLines;
+	shape->nFills2 = *shape->nFills;
 
 	for ( i=0; i<shape->nRecords; ++i )
 	{
@@ -339,12 +347,6 @@ SWFShape_end(SWFShape shape)
 	free(shape->records);
 	shape->records = NULL;
 	shape->nRecords = 0;
-
-	shape->lines = &shape->lines2;
-	shape->fills = &shape->fills2;
-
-	shape->nLines = &shape->nLines2;
-	shape->nFills = &shape->nFills2;
 }
 
 
@@ -386,13 +388,8 @@ SWFShape_addStyleHeader(SWFShape shape)
 	SWFOutput_writeUInt16(out, CHARACTERID(shape));
 	SWFOutput_writeRect(out, SWFCharacter_getBounds(CHARACTER(shape)));
 
-	if (shape->isUsingNewStyles) {
-		shape->nFills2 = 0;
-		shape->nLines2 = 0;
-	}
-
-	SWFOutput_writeFillStyles(out, shape->fills2, shape->nFills2, BLOCK(shape)->type);
-	SWFOutput_writeLineStyles(out, shape->lines2, shape->nLines2, BLOCK(shape)->type);
+	SWFOutput_writeFillStyles(out, shape->_fills, shape->_nFills, BLOCK(shape)->type);
+	SWFOutput_writeLineStyles(out, shape->_lines, shape->_nLines, BLOCK(shape)->type);
 
 	/* prepend shape->out w/ shape header */
 	SWFOutput_setNext(out, shape->out);
@@ -499,14 +496,12 @@ SWFShape_writeShapeRecord(SWFShape shape, ShapeRecord record)
 
 			if ( flags & SWF_SHAPE_NEWSTYLEFLAG )
 			{
-				int i;
-
 				shape->lines = &record.record.stateChange->lines;
 				shape->fills = &record.record.stateChange->fills;
 				shape->nLines = &record.record.stateChange->nLines;
 				shape->nFills = &record.record.stateChange->nFills;
-				shape->nFills2 = *shape->nFills;
 				shape->nLines2 = *shape->nLines;
+				shape->nFills2 = *shape->nFills;
 
 				SWFOutput_writeFillStyles(shape->out, *shape->fills, *shape->nFills,
 				BLOCK(shape)->type);
@@ -517,26 +512,7 @@ SWFShape_writeShapeRecord(SWFShape shape, ShapeRecord record)
 				SWFOutput_writeBits(shape->out, SWFOutput_numBits(*shape->nFills), 4);
 				SWFOutput_writeBits(shape->out, SWFOutput_numBits(*shape->nLines), 4);
 
-				for ( i=0; i<*shape->nFills; ++i )
-				{
-					SWFMatrix matrix = SWFFillStyle_getMatrix((*shape->fills)[i]);
-
-					if ( matrix != NULL )
-						destroySWFMatrix(matrix);
-
-					/* gradients and bitmaps are destroyed separately */
-
-					free((*shape->fills)[i]);
-				}
-
-				if ( *shape->fills != NULL )
-					free(*shape->fills);
-
-				for ( i=0; i<*shape->nLines; ++i )
-					free((*shape->lines)[i]);
-
-				if ( *shape->lines != NULL )
-					free(*shape->lines);
+				freeStyles(shape);
 			}
 
 			break;
@@ -1058,42 +1034,24 @@ SWFShape_drawScaledGlyph(SWFShape shape,
 	SWFShape_moveScaledPenTo(shape, startX, startY);
 }
 
-/* THAGA */
-void SWFShape_newStyles(SWFShape shape)
+void
+SWFShape_newStyles(SWFShape shape)
 {
 	ShapeRecord record;
 
 	shape->isUsingNewStyles = TRUE;
 
 	if (shape->isNewStylesLast == TRUE) {
-		int i;
-
 		record = shape->records[shape->nRecords-1];
-
-		for ( i=0; i<*shape->nFills; ++i )
-		{
-			SWFMatrix matrix = SWFFillStyle_getMatrix((*shape->fills)[i]);
-
-			if ( matrix != NULL )
-				destroySWFMatrix(matrix);
-
-			/* gradients and bitmaps are destroyed separately */
-
-			free((*shape->fills)[i]);
-		}
-
-		if ( *shape->fills != NULL )
-			free(*shape->fills);
-
-		for ( i=0; i<*shape->nLines; ++i )
-			free((*shape->lines)[i]);
-
-		if ( *shape->lines != NULL )
-			free(*shape->lines);
+		freeStyles(shape);
 	}
 	else {
 		record = newShapeRecord(shape, SHAPERECORD_STATECHANGE);
 	}
+
+	record.record.stateChange->line = 0;
+	record.record.stateChange->leftFill = 0;
+	record.record.stateChange->rightFill = 0;
 
 	record.record.stateChange->flags |= SWF_SHAPE_FILLSTYLE0FLAG;
 	record.record.stateChange->flags |= SWF_SHAPE_FILLSTYLE1FLAG;
@@ -1104,6 +1062,7 @@ void SWFShape_newStyles(SWFShape shape)
 	shape->fills = &record.record.stateChange->fills;
 	shape->nLines = &record.record.stateChange->nLines;
 	shape->nFills = &record.record.stateChange->nFills;
+
 	shape->isNewStylesLast = TRUE;
 
 	*shape->lines = NULL;
@@ -1111,6 +1070,13 @@ void SWFShape_newStyles(SWFShape shape)
 	*shape->nLines = 0;
 	*shape->nFills = 0;
 }
+
+void
+SWFShape_setWhole(SWFShape shape)
+{
+	shape->isWhole = TRUE;
+}
+
 
 /*
  * Local variables:

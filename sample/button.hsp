@@ -1,0 +1,66 @@
+;ボタンとボタンサウンド(非イベントサウンド)
+;goto氏作のjaMingサンプルより
+
+	#include "minghsp.as"
+	#include "swfpreview.as"
+
+	#module
+
+	;四角形を作る
+	#deffunc makeRect val shape,val fill,int w,int h,int r,int g,int b,int a
+	SWFShape@ s
+	sel_s@ s
+	s_addSolidFill@ f,r,g,b,a
+	s_setRightFill@ f
+	s_movePenTo@ -w/2,-h/2
+	s_drawLine@ w
+	s_drawLine@ ,h
+	s_drawLine@ -w
+	s_drawLine@ ,-h
+	shape=s
+	fill=f
+	return
+
+	#global
+
+	SWFSound sound,"mine/sample.mp3",SWF_SOUND_MP3_COMPRESSED |SWF_SOUND_22KHZ |SWF_SOUND_16BITS |SWF_SOUND_STEREO
+
+	SWFMovie m
+	m_setDimension 400f,400f
+
+	SWFButton b
+	b_addSound sound,SWFBUTTON_MOUSEUP	;ボタンサウンドなのでSWFSoundInstanceによる制御はできない
+
+	makeRect s1,f1,96,96,0xff,,,0xff
+	b_setUp s1
+
+	makeRect s2,f2,96,96,,0xff,,0xff
+	b_setOver s2
+
+	makeRect s3,f3,96,96,,,0xff,0xff
+	b_setDown s3
+
+	makeRect s4,f4,96,96,,,,0xff
+	b_setHit s4
+	m_add i,b
+	sel_i i
+	i_moveTo 200f,200f
+	m_nextFrame
+
+	fname="button.swf"
+	m_save fname
+	mes stat
+	destroy_m m
+	destroy_s s1
+	destroy_s s2
+	destroy_s s3
+	destroy_s s4
+	destroy_f f1
+	destroy_f f2
+	destroy_f f3
+	destroy_f f4
+	destroy_b b
+	destroy_snd sound
+
+	swfpreview fname
+	stop

@@ -1,4 +1,4 @@
-MingHSP ver1.0 beta11.1 (06/07/10)
+MingHSP ver1.0 beta12 (06/07/10)
 ※これはまだベータ版なので仕様は予告無く変更されることがあります
 
   作者
@@ -19,6 +19,7 @@ MingHSP ver1.0 beta11.1 (06/07/10)
     ＠アーカイブ構成
     ＠命令一覧
     ＠ビルドについて
+    ＠Ming 0.3.0からの変更点
     ＠ToDo
     ＠謝辞
     ＠ライセンス等
@@ -54,7 +55,7 @@ MingHSP ver1.0 beta11.1 (06/07/10)
 
       まだマニュアルなどが出来ておらず、現在はMingを使ったことがあって、どの
     命令がMingのどの命令に対応しているかが分かる人だけが使ってくださいという
-    状態ですご了承下さい。
+    状態です。ご了承下さい。
 
   ＠軽量版について
 
@@ -77,19 +78,19 @@ MingHSP ver1.0 beta11.1 (06/07/10)
   ＠制限
 
     ・プログレッシブJPEGを読み込むことは出来ません。事前に通常のJPEGに変換
-      してから読み込ませてください(これはFlashの仕様です)
+      してから読み込ませてください(Flashの仕様)
+    ・ADPCMファイルは量子化ビットが16bitのもののみ使用できます(Flashの仕様)
     ・読み込めるWAVファイルは無圧縮のもののみです
     ・PHP版におけるSWFShapeのaddFillメソッドはs_addSolidFill,
       s_addBitmapFill, s_addGradientFillに対応しています
     ・現状ではActionScriptコンパイラ以外でエラーが起こるとプログラムごと終了
       します
-    ・量子化ビットが8bitのADPCMファイルは読み込むとエラーが出ます。WAV形式で
-      あれば問題ありません
-    ・PDRのモーフィングで線を閉じるフラグが異なるパスがあるPDR同士は
+    ・PDRのモーフィングで「線を閉じる」フラグが異なるパスがあるPDR同士は
       モーフィングさせることができません。これに対応することは困難なのでこれ
       は仕様とさせていただきます。そのほかPDRファイルをParaFla!で
       モーフィングさせた場合とMingHSPでモーフィングさせた場合とでは結果が
       異なることがあります。
+    ・現在のところFLVの音声は取り込めません
 
   ＠同梱ツールについて
 
@@ -265,6 +266,12 @@ MingHSP ver1.0 beta11.1 (06/07/10)
       glyph.as           フォントグリフを描画する
       gradientxform.as   グラデーションとモーフィング。以上四つはMingの公式
                          サンプルのMingHSP版
+      gradientxform.hsp
+      morph.hsp          モーフィング(シェイプトゥイーン)の使用例
+      newstyles.hsp      s_newStyles命令の使用例
+      statictext.hsp     静止テキストの例
+      button.hsp         ボタン
+      textfield.hsp      テキストフィールド
       pdrtest.hsp        PDR読み込みのサンプル(HSP 3.0用)
       pdrmorph,hsp       PDRを読み込んでモーフィングを行う(HSP 3.0用)
       test9.pdr          pdrmorph.hspで使用するPDRファイル
@@ -286,6 +293,7 @@ MingHSP ver1.0 beta11.1 (06/07/10)
       minghsp
       └src
         └minghsp.c      MingHSP本体
+          mhspaction.c
           loadaction.c
           pdr.c
           pdr.h
@@ -294,6 +302,7 @@ MingHSP ver1.0 beta11.1 (06/07/10)
           formats.c      フォーマット判定。Mingのコードを使用
           formats.h
           hspdll.h
+          movie.c
           minghsp.rc     リソーススクリプト
           Makefile
           actioncompiler
@@ -333,46 +342,18 @@ MingHSP ver1.0 beta11.1 (06/07/10)
 
   ＠命令一覧
 
-    minghsp.hpi  命令総数:205
+    minghsp.hpi
 
-        sel_s
-        sel_m
-        sel_i
-        sel_g
-        sel_bmp
-        sel_f
-        sel_p
-        sel_t
-        sel_fnt
-        sel_tf
-        sel_mc
-        sel_b
-        sel_v
-        sel_c
-        sel_si
-        destroy_s
-        destroy_m
-        destroy_g
-        destroy_bmp
-        destroy_f
-        destroy_p
-        destroy_t
-        destroy_fnt
-        destroy_bfnt
-        destroy_tf
-        destroy_mc
-        destroy_a
-        destroy_b
-        destroy_snd
-        destroy_v
-        destroy_pc
+        mhsp_sel
+        mhsp_destroy
         mhsp_float
         mhsp_add
         mhsp_sub
         mhsp_mul
         mhsp_div
         mhsp_int
-        mhsp_fcloseall
+        mhsp_f2d
+        mhsp_cleanup
         mhsp_setwarnbuf
         mhsp_getaswarn
         mhsp_getaserror
@@ -383,6 +364,7 @@ MingHSP ver1.0 beta11.1 (06/07/10)
         ming_setSWFCompression
         SWFBUTTON_KEYPRESS
         ming_useConstants
+        ming_collectGarbage
         SWFMovie
         m_save
         m_add
@@ -428,6 +410,7 @@ MingHSP ver1.0 beta11.1 (06/07/10)
         s_getPen
         s_newStyles
         s_loadPdr
+        s_setWhole
         i_moveTo
         i_move
         i_scaleTo
@@ -541,7 +524,7 @@ MingHSP ver1.0 beta11.1 (06/07/10)
         si_loopCount
         SWFPrebuiltClip
 
-  mingdc.dll命令総数:3
+    mingdc.dll
 
         vram2dbl
         wav2adpcm
@@ -605,11 +588,41 @@ MingHSP ver1.0 beta11.1 (06/07/10)
       ディレクトリにコピーし、それぞれのプログラムの名前を冠した
       バッチファイルを実行することで得られます。
 
+  ＠Ming 0.3.0からの変更点
+
+    ・WAVEファイルを読み込めるようにした
+      (sound.c)
+    ・BMPファイルを読み込めるようにした
+      (bitmap.c, bmpdbl.c, dbl.c)
+    ・939氏のパッチを適用。一部の携帯電話でJPEGの表示がおかしくなるのを修正
+      (jpeg.c)
+    ・モーフィングで二つ目以降の塗りの情報が全て一つ目と同じになっていたのを
+      修正
+      (fillstyle.c)
+    ・SWFOutput_curPos関数が変更される可能性のあるアドレスを返していたので
+      バッファの先頭からのオフセットを返すように変更
+      (button.c, morph.c, output.c, output.h)
+    ・256以上の塗りの情報を持ったSWFShapeオブジェクトを作成できないバグを
+      修正
+      (shape.c)
+    ・SWFShape_newStyles関数を追加し、StateNewStylesを使えるようにした
+      (shape.c)
+    ・MP3をイベントサウンドに使用できるようにした
+      (mp3.c, sound.c, soundstream.c)
+    ・SWFSoundオブジェクトをm_addExportに指定しても処理されなかったのを修正
+      (movie.c)
+    ・SWFFillStyleに関連付けられたオブジェクトを削除する
+      destroySWFFillStyleRelated関数の追加
+      (fillstyle.c, fillstyle.h)
+    ・SWFShape_setWhole関数の追加
+      (shape.c)
+
   ＠ToDo
 
     上にあるほど優先度が高いです。順番は時々変わります
 
     ・マニュアル作成
+    ・サンプルの改良
     (多分この下は1.0正式版リリース後)
     ・RLE, ビットフィールドBMPに対応
     ・mingdcの処理を別スレッドで行うようにする
@@ -631,7 +644,7 @@ MingHSP ver1.0 beta11.1 (06/07/10)
         aclib
           Copyright (C) 2005-2006  Coa  - http://www.geocities.jp/coa9999
           Copyright (C) 2002  Opaque Industries - http://www.opaque.net/
-      を含んでいますが、これら自体はLGPL version 2.1の第6節における
+      の派生物を含んでいますが、これら自体はLGPL version 2.1の第6節における
       "work that uses the Library"なのでLGPL version 2.1の適用外となります。
       (後述しますがminghsp.hpi, minghspl.hpi, minghspsl.hpiには
       川合堂ライセンス-01を適用しています)
@@ -640,7 +653,8 @@ MingHSP ver1.0 beta11.1 (06/07/10)
       これらがLGPL verion 2.1により保護されている旨明記し、さらにlgpl.txtを
       配布ファイルに同梱してLGPL verion 2.1の詳細はこのファイルを参照する
       ように告知してください。
-      これはLGPL version 2.1の要請によります。
+      これを守る限りminghsp.hpi, minghspl.hpi, minghspsl.hpiを使用する
+      プログラムを自由に定められた条件で配布できます。
 
       記述例)
         minghsp.hpiはLGPL version 2.1で保護されているソフトウェア
@@ -651,8 +665,8 @@ MingHSP ver1.0 beta11.1 (06/07/10)
           Copyright (C) 2005-2006  Coa  - http://www.geocities.jp/coa9999
           Copyright (C) 2002  Opaque Industries - http://www.opaque.net/
 
-        を含んでいます。LGPL version 2.1の詳細についてはlgpl.txtを参照して
-        ください。
+        派生物を含んでいます。LGPL version 2.1の詳細についてはlgpl.txtを参照
+        してください。
 
     1.アーカイブ内のソフトウェアの中には
         zlib      Copyright (C) 1995-2004 Jean-loup Gailly and Mark Adler
@@ -669,23 +683,28 @@ MingHSP ver1.0 beta11.1 (06/07/10)
         source\minghsp\blocks
       以下の全ファイルと
         source\minghsp\formats.c
+        source\minghsp\movie.c
         source\mhsputil\readgif.c
         source\mhsputil\readpng.c
       にはLGPL version 2.1が適用されます。再配布する場合はこれらのライセンス
       がLGPL version 2.1であることを明記しLGPL version 2.1の複製(lgpl.txt)も
       必ず同梱するようにしてください。
-      プラグインとしての利用や実行ファイル呼び出しでの利用をしている限りでは
-      そのプログラムにはLGPL version 2.1は適用されません。しかしこれらを
-      ソースレベルで組み込んだプログラムはLGPL version 2.1となります。詳しく
-      は同封のlgpl.txt(英語)を参照してください。
-      なおこの解釈は正しいと信じていますが法的に有効では無いので注意してくだ
-      さい。
 
-    4.minghsp.hpi, minghspl.hpi, minghspsl.hpiおよびこれらのMing部分以外の
-      ソースとbmp2dbl.exeおよびそのソースの内bmp2dbl.c, bmp2dbl.h, readbmp.c
-      とifdbl.spiおよびそのソースのライセンスは川合堂ライセンス-01とします。
-      詳しくは同封のkl-01.txtを参照してください。なお、再配布の際に
-      ライセンス文の複製を一緒に配布する必要はありません。
+    4.
+        minghsp.hpi, minghspl.hpi, minghspsl.hpiおよびこれらのソースのうち
+      第3項に挙げられたもの以外
+        bmp2dbl.exeのソースの内bmp2dbl.c, bmp2dbl.h, readbmp.c, mhsputil.c
+        ifdbl.spiおよびそのソース(ifdbl.c, mhsputil.c)
+        mingdc.dllおよびそのソース(mingdc.c, mhsputil.c)
+        wav2adpcm.exeおよびそのソース(wav2adpcm.c)
+      のライセンスは川合堂ライセンス-01とします。
+      詳しくは同封のkl-01.txtを参照してください。
+      minghsp.hpi, minghspl.hpi, minghspsl.hpiの再配布については第0項に
+      従ってください。
+      bmp2dbl.exeはMing由来のコードを含んでいるため、再配布の際には第0項の
+      条件に準じてMingを使用している旨を明記してください。
+      その他の川合堂ライセンス-01のファイルについては自由に再配布を行うこと
+      ができます。ライセンス文の複製を一緒に配布する必要もありません。
 
     5.ttf2fft.exeは次のライセンスに基づいて再配布されています。以下に全文を
       引用します。再配布する場合はこのライセンスも必ず同梱するようにしてくだ

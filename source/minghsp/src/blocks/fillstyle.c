@@ -270,6 +270,23 @@ SWFOutput_writeMorphFillStyles(SWFOutput out,
 	}
 }
 
+void
+destroySWFFillStyleRelated(SWFFillStyle fill)
+{
+	switch (fill->type)
+	{
+		case SWFFILL_LINEAR_GRADIENT:
+		case SWFFILL_RADIAL_GRADIENT:
+			destroySWFGradient(fill->data.gradient);
+			break;
+
+		case SWFFILL_TILED_BITMAP:
+		case SWFFILL_CLIPPED_BITMAP:
+			destroySWFBitmap(fill->data.bitmap);
+			break;
+	}
+}
+
 
 /*
  * Local variables:

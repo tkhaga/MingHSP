@@ -1,0 +1,76 @@
+;グラデーションとモーフィング
+;Ming公式のサンプルより
+
+	#include "minghsp.as"
+	#include "swfpreview.as"
+
+	SWFMorph p							;モーフィングオブジェクトの作成
+
+	SWFGradient g1						;■SWFGradientオブジェクトを作成し、変数g1に代入します。
+										;  SWFGradientはグラデーションを表すオブジェクトです。
+
+	g_addEntry 0,0,0,0,0xff				;■グラデーションの各地点に色を設定
+	g_addEntry 0.16f,0xff,0xff,0xff,0xff
+	g_addEntry 0.32f,0,0,0,0xff
+	g_addEntry 0.48f,0xff,0xff,0xff,0xff
+	g_addEntry 0.64f,0,0,0,0xff
+	g_addEntry 0.80f,0xff,0xff,0xff,0xff
+	g_addEntry 1.00f,0,0,0,0xff
+
+	p_getShape1 s1	;モーフィング元のシェイプオブジェクトを取得
+	s_addGradientFill f1,g1,SWFFILL_RADIAL_GRADIENT
+	f_scaleTo 0,1f
+	s_setLeftFill f1
+	s_movePenTo -160f,-120f
+	s_drawLine 320f
+	s_drawLine 0,240f
+	s_drawLine -320f
+	s_drawLine 0,-240f
+
+	SWFGradient g2
+	sel_g g2
+	g_addEntry 0,0,0,0,0xff
+	g_addEntry 0.16f,0xff,0,0,0xff
+	g_addEntry 0.32f,0,0,0,0xff
+	g_addEntry 0.48f,0,0xff,0,0xff
+	g_addEntry 0.64f,0,0,0,0xff
+	g_addEntry 0.80f,0,0,0xff,0xff
+	g_addEntry 1.00f,0,0,0,0xff
+
+	p_getShape2 s2
+	sel_s s2
+	s_addGradientFill f2,g2,SWFFILL_RADIAL_GRADIENT
+	sel_f f2
+	f_scaleTo 0.16f
+	f_skewXTo -0.5f
+	s_setLeftFill f2
+	s_movePenTo -160f,-120f
+	s_drawLine 320f
+	s_drawLine 0,240f
+	s_drawLine -320f
+	s_drawLine 0,-240f
+
+	SWFMovie m
+	m_setDimension 320f,240f
+	m_add i,p
+	i_moveTo 160f,120f
+
+	repeat 100
+		i_setRatio 0.01*cnt
+		m_nextFrame
+	loop
+
+	fname="gradientxform.swf"
+	m_save fname
+	mes stat	;statにはファイルサイズが代入される
+	destroy_m m
+	destroy_p p
+	destroy_s s1
+	destroy_s s2
+	destroy_f f1
+	destroy_f f2
+	destroy_g g1
+	destroy_g g2
+
+	swfpreview "gradientxform.swf"
+	stop

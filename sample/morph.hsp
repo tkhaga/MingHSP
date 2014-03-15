@@ -1,0 +1,64 @@
+;シェイプモーフィング
+;Ming公式のサンプルより
+
+	#include "minghsp.as"
+	#include "swfpreview.as"
+
+	SWFMorph p
+
+	p_getshape1 s1
+	sel_s s1
+	s_setline 0, 0, 0, 0
+	s_addsolidfill f,0xff,0,0
+	s_setleftfill f
+	s_movepento -50, -50
+	s_drawline 100, 0
+	s_drawline 0, 100
+	s_drawline -100, 0
+	s_drawline 0, -100
+
+	p_getshape2 s2
+	sel_s s2
+	s_setline 3, 0, 0, 0
+
+	s_addsolidfill f,0, 0, 0xff
+	s_setleftfill f
+	s_movepento 0, -50
+	s_drawline 50, 50
+	s_drawline -50, 50
+	s_drawline -50, -50
+	s_drawline 50, -50
+
+	SWFMovie m
+	m_setdimension 150, 100
+	m_setbackground 0xff, 0xff, 0xff
+
+	SWFAction a,"play();"
+	m_add i,a1
+
+	m_add i,p
+	sel_i i
+	i_moveto 75, 50
+
+	repeat 10
+	  i_setratio 0.1 * cnt
+	  m_nextframe
+	loop
+
+	SWFAction a,"gotoFrame(0);"
+	m_add i,a2
+
+	fname="morph2.swf"
+	m_save fname
+	mes stat
+
+	;destroy_a a	;SWFActionはSWFMovieに追加している状態であれば明示的に
+					;破棄する必要はありません
+
+	destroy_m m
+	destroy_p p
+	destroy_s s1	;p_getShape1, p_getShape2で取得したSWFShapeオブジェクトも個別に解放する必要があります
+	destroy_s s2
+
+	swfpreview fname
+	stop
