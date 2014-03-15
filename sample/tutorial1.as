@@ -1,0 +1,19 @@
+#include "minghsp.as"
+
+SWFShape shape
+sel_s shape
+
+s_setLine 5,255,0,255,255
+s_movePenTo 120f,120f
+s_drawLine 60f,60f
+
+s_setLine 5,0,255,255,255
+s_movePenTo 120f,120f
+s_drawLineTo 60f,60f
+
+SWFMovie movie
+sel_m movie
+
+m_add i,shape
+
+m_save "tutorial1.swf"

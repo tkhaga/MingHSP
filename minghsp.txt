@@ -1,0 +1,617 @@
+MingHSP ver.1.0 beta 7.1
+※これはまだベータ版なので仕様は予告無く変更されることがあります
+
+  作者
+  THAGA
+
+  連絡先
+  homepage: http://www.h5.dion.ne.jp/~markent/
+  e-mail: thaga@__nospam__k7.dion.ne.jp (__nospam__は除いてください)
+
+  ＠概要
+
+    これはOpaque Industriesの開発したFlash出力ライブラリ、Ming 0.2aをgoto氏がサウンド対応やマルチバイト文字対応という改良をしたJaMingをTHAGAがHSPプラグイン化したものです。
+
+    HSP 2.5以上で動作しますが、浮動小数点数をパラメータに取る命令が多いため、浮動小数点数を利用できるHSP 2.55以降を推奨します（意外と知られていない）。サンプルは基本的にHSP 2.55以上用です。
+
+    マニュアルはまだありません。とりあえずminghsp.hpi,minghsp.as,mingtest.asをHSPのフォルダに入れてmingtest.asを実行してください。test.swfというファイルが出力されます。これはJaMingの公式サイトにあるblink.swfと同じものです
+
+    JaMingのソースコードはhttp://humming.dip.jp/ming/のgoto氏のホームページで手に入れることが出来ます
+
+    オリジナルのMingのソースコードはhttp://ming.sourceforge.net/で手に入れることが出来ます
+
+  ＠使用方法
+
+    minghsp.asをcommonディレクトリにコピーし、minghsp.hpiを読みこみ可能な場所においてスクリプトの先頭に
+	#include "minghsp.as"
+    と書いてください。他に必要なスクリプトやプラグインはありません
+
+  まだマニュアルなどが出来ておらず、現在は分かる人だけが使ってくださいという状態です。ご了承下さい。
+
+  ＠アーカイブ構成
+
+    srcフォルダ以下はJaMming-0.1.5に対する差分です
+
+    minghsp.hpi          (プラグイン本体)
+    minghsp.as           (プラグインを利用するためのヘッダ)
+    minghsp3.as          (上のHSP 3.0対応版)
+    swfpreview.as        (作成したFlashをHSPのウィンドウ内で見るためのモジュール)
+    swfpreview3.as       (上のHSP 3.0対応版)
+    mingdc.dll           (データコンバーターHSPプラグイン)
+    minghsp.txt          (この文書)
+    manual.txt           (各命令のリファレンス。未完成)
+    swfpreview.txt       (swfpreviewのマニュアル)
+    mingdc.txt           (mingdc.dllのマニュアル)
+    ttf2fft.exe          (TrueTypeフォントファイルをFFT形式に変換するソフト)
+    makefdb.exe          (FFT形式フォントファイルをMingで利用できるFDB形式に変換するMing付属ツール)
+    wav2adpcm.exe        (JaMing同梱のraw2adpcm.cをWAVEファイルの読みこみに対応させたもの)
+    png2dbl.exe          (PNG形式画像ファイルをMingで読み込めるDBL形式に変換するMing付属ツール)
+    gif2dbl.exe          (GIF形式画像ファイルをMingで読み込めるDBL形式に変換するMing付属ツール、のはずだが正常動作を確認できず)
+    sample               (MingHSPを使用したサンプル)
+    └mingtest.as        (四角形が点滅しながら回転する。goto氏のblink.phpのMingHSP版)
+      mingtest.hsp       (上のHSP 3.0対応版)
+      tutorial1.as       (manual.txtのチュートリアル用スクリプト)
+      tutorial1.hsp      (上のHSP 3.0対応版)
+      tutorial2.as
+      tutorial2.hsp
+      shape.as           (曲線と直線から成る図形)
+      action.as          (アクションスクリプトを用いたアニメーション)
+      glyph.as           (フォントグリフを描画する)
+      gradientxform.as   (グラデーションとモーフィング。以上四つはMingの公式サンプルのMingHSP版)
+      mine               (mine氏提供のサンプルを収録しています)
+      └Ex_synchro.as    (MP3音声に合わせて歌詞を表示する)
+        Ex_Mp3.as        (MP3音声の再生)
+        Ex_Mp3_shape.as  (MP3音声と図形)
+        Ex01_shape.as    (図形)
+        Ex02_txt.as      (2バイト文字。ipag.fdbというファイル名の日本語フォントを用意してください)
+        streaming.as
+        sample.mp3       (このフォルダ内のサンプルで使われるMP3ファイル)
+    src
+    └minghsp.def        (エクスポート関数定義ファイル)
+      minghsp.c
+      loadaction.c
+      utf8.c
+      utf8.h
+      formats.c
+      formats.h
+    (上書き)
+      Makefile
+      blocks
+      └
+      (上書き)
+        error.c
+        sound.c
+    util
+    └wav2adpcm.c        (wav2adpcm.exeのソース)
+      wav2adpcm.bat
+      mingdc.c           (mingdc.dllのソース)
+      mingdc.def         (エクスポート関数定義ファイル)
+      png2dbl.bat
+      gif2dbl.bat
+    (上書き)
+      png2dbl.c          (CVSから取って来たやつ)
+      gif2dbl.c
+
+  ＠注意
+
+    ・現在のところプログレッシブJPEGを読み込むことが出来ない
+    ・gif2dbl.exeはおそらく動作しない(原因は不明)
+    ・読み込めるWAVEファイルは無圧縮のもののみ
+    ・PHP版におけるSWFShapeのaddFillメソッドはs_addSolidFill,s_addBitmapFill,s_addGradientFillに対応しています
+    ・現状ではエラーが起こるとプログラムごと終了します。特にアクションスクリプトを自由に記述させるような形式は避けた方がいいです
+    ・量子化ビットが8bitのADPCMファイルは読み込むとエラーが出ます。WAVE形式であれば問題ありません
+
+  ＠IPAフォントについて
+
+    IPAフォントとは、独立行政法人情報処理推進機構(IPA)が無償使用可能な日本語フォントの公募を行って採択された高品質なTrueTypeフォントです。これをMingHSPで利用できるFDB形式に変換したものを公開しています。ライセンスの関係で「共通のオープンプリンティングシステムの開発」の成果物と同梱するという形になっています。
+    フォントは、openprinting-jp-0.1.3/ipafontディレクトリに入っており、それぞれのファイルは
+      ipag.fdb ->ゴシック体 IPAフォント
+      ipagp.fdb ->ゴシック体プロポーショナル IPAフォント
+      ipagui.fdb ->ゴシック体UI IPAフォント
+      ipam.fdb ->明朝体 IPAフォント
+      ipamp.fdb ->明朝体プロポーショナル IPAフォント
+    の様に対応しています。
+    使用については自由に行えます。
+
+    http://www.h5.dion.ne.jp/~markent/openprinting-jp-0.1.3_ipafont_fdb.7z
+
+  ＠同梱ツールについて
+
+    ・mingdc
+
+      mingdcは画像、音声をMingHSPで扱える形式に変換するためのHSP 2.6以降専用のプラグインです。詳しくはmingdc.txtを参照してください（HSP 3.0では動作しません）
+
+    ・swfpreview
+
+      swfpreviewはHSPのウィンドウでSWFを見ることが出来るようにするモジュールです。詳しくはswfpreview.txtを参照して下さい
+
+    ・wav2adpcm
+      wav2adpcmはJaMing-0.1.5に含まれているraw2adpcm.cをRIFF/WAVEファイル(データ部が無圧縮PCM)に対応させたものです
+
+        wav2adpcm in.wav [out] [16bit] [stereo]
+
+      in.wav - 入力ファイル名です
+      out - は出力ファイル名です。省略時は入力ファイル名の拡張子を.adpcmにしたものになります
+      16bit - これが1 だと入力ファイルの量子化ビット数を16とし、0だと8ビットとします。省略時は1となります。入力ファイルがRIFF/WAVEファイルの場合、無視され、ヘッダに書かれている値が採用されます
+      stereo - これが1だと入力ファイルのチャンネル数を2とし、0だと1とします。省略時は1となります。入力ファイルがRIFF/WAVEファイルの場合、無視され、ヘッダに書かれている値が採用されます
+
+    ・png2dbl，gif2dbl
+      png2dbl/gif2dblはPNG/GIFをMingで読み込めるDBL形式に変換するMing付属ツールです
+
+        png2dbl.exe in.png
+
+      in.png - 入力PNGファイル名。出力ファイル名はin.dblになる
+
+    フォント関連のツールに付いては、下の項で解説しています
+
+  ＠任意のTTFフォントをMingで利用する手引き(簡略版)
+
+    TTFフォントをMingで利用するためには、TTFフォントをFFT形式に変換し、更にこれをMing専用の形式であるfdb形式に変換する必要があります。また利用するフォントがTTCに含まれている場合、最初にこれをTTFに分解する必要があります。ここではWindowsに標準でインストールされているMS Gothicを例にとって手順を説明します(ライセンスの問題があるのでここで得られたfdbファイルは使用しないで下さい)
+
+    MS GothicはWindowsディレクトリ下のfontsディレクトリにあるmsgothic.ttc中に含まれているのでまずはこれをTTFに分解する必要があります
+    これを行うためには
+      http://www.xlsoft.com/jp/products/indigorose/files/ttsdk.zip
+    をダウンロードして、展開した中に含まれているBREAKTTC.EXEが必要です
+BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力します
+
+    breakttc %windir%\fonts\msgothic.ttc
+
+    すると
+
+    font00.ttf
+    font01.ttf
+    font02.ttf
+
+    がカレントディレクトリにできます。このうちfont00.ttfがMS Gothicなので
+
+    ttf2fft -l font00.ttf
+
+    と入力します。すると
+
+  There is 1 face in this file.
+
+  ----- Face number: 0 -----
+
+     family: MS Gothic
+     style:  Regular
+     charmaps:
+     0: platform: Macintosh, encoding: Roman
+     1: platform: Microsoft, encoding: Unicode
+
+    と表示されます。このメッセージにより日本語を利用するためにはキャラクターマップ 1を変換すればいいことが分かります。よって
+
+    ttf2fft -e 1 font00.ttf
+
+    と入力します。変換が終了するとMSGGothic.fftが作成されます。そして最後に
+
+    makefdb MSGGothic.fft
+
+    と入力することによってMingで使用できるフォントファイル、MS Gothic.fdbが得られます
+
+  ＠命令一覧
+
+    minghsp.hpi命令総数:156
+
+	sel_s
+	sel_m
+	sel_i
+	sel_g
+	sel_bmp
+	sel_f
+	sel_p
+	sel_t
+	sel_fnt
+	sel_tf
+	sel_sp
+	sel_b
+	destroy_s
+	destroy_m
+	destroy_i
+	destroy_g
+	destroy_bmp
+	destroy_f
+	destroy_p
+	destroy_t
+	destroy_fnt
+	destroy_bfnt
+	destroy_tf
+	destroy_sp
+	destroy_b
+	destroy_a
+	mhsp_float
+	mhsp_add
+	mhsp_sub
+	mhsp_mul
+	mhsp_div
+	mhsp_int
+	mhsp_fcloseall
+	mhsp_setwarnbuf
+	ming_setCubicThreshold
+	ming_setScale
+	ming_useSWFVersion
+	swfbutton_keypress
+	SWFMovie
+	m_save
+	m_add
+	m_output
+	m_remove
+	m_nextFrame
+	m_labelFrame
+	m_setBackground
+	m_setRate
+	m_setDimension
+	m_setFrames
+	m_streamMp3
+	m_streamMp3_buf
+	m_addSound
+	m_addSound_buf
+	m_startSound
+	m_stopSound
+	m_setButtonSound
+	SWFShape
+	s_setLine
+	s_addSolidFill
+	s_addBitmapFill
+	s_addGradientFill
+	s_setLeftFill
+	s_setRightFill
+	s_movePenTo
+	s_movePen
+	s_drawLineTo
+	s_drawLine
+	s_drawCurveTo
+	s_drawCurve
+	s_drawGlyph
+	s_drawCircle
+	s_drawArc
+	s_drawCubicTo
+	s_drawCubic
+	i_moveTo
+	i_move
+	i_scaleTo
+	i_scale
+	i_rotateTo
+	i_rotate
+	i_skewXTo
+	i_skewX
+	i_skewYTo
+	i_skewY
+	i_setDepth
+	i_remove
+	i_setName
+	i_setRatio
+	i_addColor
+	i_multColor
+	i_setMatrix
+	i_addAction
+	SWFGradient
+	g_addEntry
+	SWFBitmap
+	bmp_getWidth
+	bmp_getHeight
+	f_moveTo
+	f_scaleTo
+	f_rotateTo
+	f_skewXTo
+	f_skewYTo
+	SWFMorph
+	p_getShape1
+	p_getShape2
+	SWFText
+	t_setFont
+	t_setHeight
+	t_setSpacing
+	t_setColor
+	t_moveTo
+	t_addString
+	t_getWidth
+	t_getAscent
+	t_getDescent
+	t_getLeading
+	SWFFont
+	fnt_getWidth
+	fnt_setFlags
+	fnt_getAscent
+	fnt_getDescent
+	fnt_getLeading
+	SWFTextField
+	tf_setFont
+	tf_setBounds
+	tf_align
+	tf_setHeight
+	tf_setLeftMargin
+	tf_setRightMargingin
+	tf_setMargins
+	tf_setIndentation
+	tf_setLineSpacing
+	tf_setColor
+	tf_setName
+	tf_addString
+	SWFMovieClip
+	mc_add
+	mc_remove
+	mc_nextFrame
+	mc_labelFrame
+	mc_setFrames
+	mc_addSound
+	mc_addSound_buf
+	mc_startSound
+	mc_stopSound
+	SWFButton
+	b_addShape
+	b_setUp
+	b_setOver
+	b_setDown
+	b_setHit
+	b_addAction
+	b_setAction
+	SWFAction
+	SWFAction_save
+	SWFAction_load
+
+  mingdc.dll命令総数:3
+
+	vram2dbl
+	wav2adpcm
+	getwavinfo
+
+＠minghsp.hpiのビルドについて
+
+  １，MinGW,MSYSのインストール
+      http://www.mingw.org/からMinGW,MSYSの最新安定版をダウンロードし、MinGWを最初にインストール。次にMSYSをインストールするが、途中でMinGWのインストール先を聞いてくるので先ほどMinGWをインストールしたパスを入力する。
+
+  ２，MSYSの環境設定
+      MinGWのインストールフォルダがd:\MinGW、MSYSのインストールフォルダがd:\msysの場合、d:\msys\etc\fstabの内容を次のように変更しておくこと（違うフォルダにインストールした場合適宜読みかえること）
+
+d:/mingw /mingw
+d:/mingw /usr/local
+d:/mingw/man /usr/local/share/man
+d:/mingw/lib /usr/lib
+d:/mingw/include /usr/include
+
+  ３，jaming-0.1.5のダウンロード
+      http://humming.dip.jp/からjaming-0.1.5をダウンロード。適当なフォルダに展開し、MingHSPの配布ファイルのsrcフォルダ以下をjaming-0.1.5のsrcフォルダに上書き
+
+  ４，bisonとflexのインストール
+      bisonとflexをパスの通ったところか、jaming-0.1.5のsrc/actioncompilerフォルダに入れてください。bisonは1.35を使ってください。分からない場合はhttp://hp.vector.co.jp/authors/VA029962/bison_flex_gnuwin32.zipをダウンロードして、展開した中身を全部jaming-0.1.5のsrc/actioncompilerフォルダに入れてください
+
+  ５，MSYSからコンパイル
+      デスクトップのMSYSのアイコンをダブルクリック。プロンプトが出てきたらjaming-0.1.5のsrcフォルダがD:\jaming-0.1.5の場合、cd /d/jaming-0.1.5/srcと入力してカレントディレクトリを移動、その後makeを実行する。これでminghsp.hpiが得られる。
+
+  ＠履歴
+
+    ver.1.0 beta 7.1 (05/09/13)
+
+      --MingHSP--
+        ・SWFBitmap命令で画像ファイルのフォーマットを自動判定するようにした。これにより画像ファイルの拡張子は関係無くなりました
+        ・HSP 3.0対応(minghsp3.as)
+
+      --swfpreview--
+        ・swf_get_quality，swf_set_quality，swf_get_loop，swf_set_loop命令を追加
+        ・swfpreviewで一度SWFファイルを開いた後、別のファイルを開けなかったのを修正
+        ・正しいファイルかどうか判定するようにした(マジックナンバーを見ているだけ)
+        ・非圧縮SWFの場合正常に読み込めたらstatに画面サイズを入れるようにした(上位16ビットが縦サイズ、下位16ビットが横サイズ、ピクセル単位)
+        ・HSP 3.0対応版を同梱(swfpreview3.as)
+
+      --mingdc--
+        ・使用しているzlibを1.2.2から1.2.3に更新
+
+      --その他--
+        ・リンク中に警告が出ないようMakefileやバッチファイルを修正
+        ・ソースファイルにもライセンスに関する記述をするようにした
+        ・mingtest.asのHSP 3.0対応版mingtest3.hspを同梱
+        ・書籍に載ることになったのでマニュアルの記述を増やした
+        ・BREAKTTC.EXEの同梱を止めた
+
+    ver.1.0 beta 7 (05/06/30)
+
+      --MingHSP--
+        ・マニュアルに載っていない命令で
+          m_labelFrame
+          mc_labelFrame
+          fnt_getAscent
+          fnt_getDescent
+          fnt_getLeading
+          t_getAscent
+          t_getDescent
+          t_getLeading
+          命令を追加
+        ・SWFAction_loadの仕様を変更
+        ・m_streamMp3_buf、SWFBitmap_buf、m_addSound_buf、mc_addSound_bufが事実上使用できなかったのを修正。戻り値のオブジェクトの参照を入力した変数に返すように変更。なお、このついでに入力に使用した変数の内容を後で変更してもいいようにした
+        ・WAVEファイル判定部分をちょっと改変
+        ・ソースコードの可読性の面での改良(あとwarningがでないように)
+        ・SWFBitmap命令で拡張子がdblで存在しないファイルを開いた時に一般保護違反になるのを修正。statに値を返すようにした
+        ・新たにfloat値を整数に変換するmhsp_int命令を追加
+        ・colconv命令の廃止。今まで
+            colconv 0xff,0,0xff,0xff
+            s_setLine w,stat
+          と書いていたのは
+            s_setLine w,0xff,0,0xff,0xff
+          と書くようになります
+        ・SWFTextField命令でフラグを設定する処理の実装し忘れを修正
+        ・fnt_setFlags命令用の定数のminghsp.asでの定義し忘れを修正
+        ・Makefileをlibmingをインストールしてからminghsp.hpiを作成するように変更
+
+      --swfpreview--
+        ・swfpreviewのswfpreview命令の第一引数を変数から文字列に変更
+        ・swfpreviewのswf_stop命令をswf_stopplayに変更(やってることも変わっています)
+        ・swfpreviewでインターフェースを解放していなかったのを修正。サウンドを再生中に終了してもエラーが出ないようになった
+        ・swfpreviewですでにFlashPlayerの子ウィンドウが作成されている場合にstatに値を代入するようにした
+        ・swfpreviewにswf_totalframes,swf_currentframe,swf_isplaying命令を追加
+
+      --mingdc--
+        ・データコンバーター用HSPプラグインmingdc.dllを追加。HSPのウィンドウの内容をMing用のDBL形式に変換するvram2dbl、非圧縮WAVEファイルをADPCM形式に変換するwav2adpcm、WAVEファイルの情報を取得するgetwavinfo命令が搭載されています
+
+      --wav2adpcm--
+        ・wav2adpcmを色々と改変
+
+      --その他--
+        ・周辺ツールを全部再コンパイルした
+        ・サンプルを修正
+        ・src/actioncompiler以下を同梱するのを止めた
+
+    ver.1.0 beta 6.1 (05/05/15)
+      ・SWFAction_load命令を、ファイルから読み込む仕様に変更。それ以前にbeta 6ではSWFAction_load命令が機能すらしていませんでした
+      ・オリジナルのJaMingに対する更新ファイルが減るようにSWFAction_saveの実装を変更
+      ・サンプルのaction.asが仕様変更に対応していなかったので修正
+
+    ver.1.0 beta 6 (05/05/15)
+      ・コンパイルしたActionScriptのオブジェクトをファイルに保存＆ロードするためのSWFAction_save,SWFAction_load命令を追加（使い方はmanual.txtに書いてあります）
+      ・次の命令の名前を変更した（左が変更前、右が変更後）。どうやらSWFSpriteというのは古い名称で、現在ではSWFMovieClipとするのが正しいようです
+      SWFSprite SWFMovieClip
+      sp_add mc_add
+      sp_remove mc_remove
+      sp_nextFrame mc_nextFrame
+      sp_setFrames mc_setFrames
+      sp_addSound mc_addSound
+      sp_addSound_buf mc_addSound_buf
+      sp_startSound mc_startSound
+      sp_stopSound mc_stopSound
+      sel_sp sel_mc
+      destroy_sp destroy_mc
+      ・Mingのマニュアルに載っていない機能のうち
+      s_drawGlyph
+      s_drawCircle
+      s_drawArc
+      s_drawCubicTo
+      s_drawCubic
+      i_setMatrix
+      i_addAction
+      命令を追加
+      ・SWFをHSPで見るためのモジュールswfpreview.asを追加。動作にはIE用のFlash PlayerとIE 5.0以上、HSP 2.6以上（HSP3は不可）、llmod、lolipop 3.0以上が必要です
+      ・MingHSPのサンプルを追加
+
+    ver.1.0 beta 5 (05/03/22)
+      ・colconvの仕様を変更(変換結果をstatに代入するようにした)
+      ・g_addEntry命令が間違って実装されていたのを修正
+      ・下の上から二番目が完全でなかったのを修正
+      ・tf_addString,t_getWidthで２バイト文字が通らないバグを修正
+
+    ver.1.0 beta 4 (05/03/19)
+      ・mhsp_selshape,mhsp_destroyshape命令等をそれぞれsel_s,destroy_sのように変更
+      ・オブジェクトを作成し、次に同じ種類のオブジェクトを作成するまではそのオブジェクトに対する操作をするのにsel_～系の命令を使わなくてよいように変更
+      ・上記の変更に伴い、minghsp.as,mingtest.asを更新
+      ・png2dbl.exe,gif2dbl.exeを追加。それぞれPNG,GIFファイルをMingで読み込めるDBL形式に変換するためのMing付属ツールです(ただしgif2dbl.exeの正常動作は確認できず)
+      ・エラー時のダイアログの表示を変更(変な英語だったのを日本語に)
+      ・コンパイラをMinGWに変更。makefile等もMinGW用のものに変更
+      ・SWFBitmap命令でDBLファイルが読み込めなかった(超どうしようもない)バグを修正
+      ・SWFBitmap命令で入力ファイル名の拡張子が全部小文字でなくても種類を判別できるように変更(これもバグといっちゃあバグである)
+
+    ver.1.0 beta 3 (04/02/XX)
+      ・変数からの読みこみに対応したm_streamMp3_buf,m_addSound_buf,mhsp_SWFBitmap_buf,sp_addSound_buf命令を追加(ファイルから読みこむ場合とは使用方法が異なります)
+      ・m_addSound,sp_addSoundでRIFF WAVEを直接読みこめるようにした(データ部が無圧縮PCMであるファイルのみ。Ming内部ではRAWデータとして扱われます)
+      ・mhsp_destroyactionの宣言し忘れを修正(こんなのが多くて申し訳ありません)
+      ・wav2adpcmの改良
+      ・念のためエラーと警告の出力に使うバッファを4KBに拡張
+      ・警告出力のフォーマットを変更
+
+    ver.1.0 beta 2 (04/02/04)
+      ・/src/actioncompiler下のソースファイルをbison 1.35,flex 2.5.4aで作成したものに置き換え
+(bisonはバージョンを下げた。flexは上げた。これによりSWFAction命令が正常に動作しないバグが直るはず)
+      ・mhsp_add,mhsp_sub,mhsp_mul,mhsp_div命令を追加(浮動小数点演算用命令)
+      ・SWFFont命令以外で内部でファイルを開く命令で、ファイルを閉じないようにした
+      ・PHP版では引数が省略されている場合に適用される省略値を考慮しないようにした(HSPでは問題があることが分かりました)
+      ・mhsp_fcloseall命令を追加
+      ・Mingをライブラリ化するようにした。これによりサイズが減りました(もっと早くに気付くべきだった…)
+      ・mhsp_convfloatをmhsp_floatに改名
+      ・SWFSprite系の命令のプレフィックスをs_からsp_に、SWFBitmap系でb_からbmp_に、SWFFont系でf_からfnt_に
+      ・JaMingで拡張された機能を使うため
+      m_addSound
+      m_startSound
+      m_stopSound
+      m_setButtonSound
+      sp_addSound
+      sp_startSound
+      sp_stopSound
+      fnt_setFlags
+      を追加
+      ・mhsp_destroy～系命令を追加
+      ・mhsp_set～系命令をmhsp_sel～に改名
+      ・定義し忘れの定数をminghsp.asに大量追加
+      ・間違えて定義していた定数を修正
+      ・t_getStringWidthをt_getWidthに改名(元々が間違っていました)
+      ・mhsp_setwarnbuf命令を追加
+      ・エラーが起きたときダイアログにメッセージを表示するようにした
+      ・m_setFrames命令の宣言し忘れを修正
+      ・m_streamMp3が正常に動作しなかったのを修正
+      ・内部でファイルを開く命令で、開けなかった場合にstatに値を返すようにした
+      ・wav2adpcm.exeを追加
+
+    ver.1.0 beta 1 (04/01/11)
+      ・フォント関連のツールを同梱
+      ・PHPのマニュアルに載っていた幾つかの関数を追加
+      ・t_addString,t_getStringWidth,tf_addString命令で文字列をUTF-8に変換してからMingに渡すようにした
+      ・m_save命令で保存したSWFファイルのサイズをstatに代入するようにした
+      ・m_output命令が利用できるようになった
+
+    ver.1.0 alpha 2 (04/01/01)
+      ・一部の関数でパラメータ省略時の初期値を考慮するようにした
+      ・とりあえずMing公式ページのマニュアルに書いてある全機能を利用できるようになった
+      ・命令の仕様を一部変更
+      ・minghsp.asで宣言を間違えていたところを修正
+      ・まだまだテスト用です
+
+    ver.1.0 alpha 1 (03/07/13)
+      ・SWFShape、SWFMovie関連の諸命令群を実装。あくまでもテスト用
+
+  ＠ToDo
+
+    ・マニュアル作成
+    ・SWFtoHSPを作る?
+    ・拡張ランタイムの作成
+    ・wav2adpcmでファイルを分割して処理できるように
+    ・Ming 0.3 beta1に対応
+
+  ＠ライセンス等
+
+    minghsp.hpiはLGPL version 2.1です。詳しくは同封のLICENCE.TXT(英語)を参照してください
+    その他は好きにして下さい
+
+ttf2fft.exeは次のライセンスの第２項に基づいて再配布されています
+//引用ここから
+The JGenerator Software License, Version 1.0
+
+ Copyright (c) 2000 Dmitry Skavish (skavish@usa.net). All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer. 
+
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in
+    the documentation and/or other materials provided with the
+    distribution.
+
+ 3. The end-user documentation included with the redistribution, if
+    any, must include the following acknowlegement:  
+    "This product includes software developed by Dmitry Skavish 
+     (skavish@usa.net, http://www.flashgap.com/)."
+    Alternately, this acknowlegement may appear in the software itself,
+    if and wherever such third-party acknowlegements normally appear.
+
+ 4. The name "The JGenerator" must not be used to endorse or promote 
+    products derived from this software without prior written permission. 
+    For written permission, please contact skavish@usa.net.
+
+ 5. Products derived from this software may not be called "The JGenerator"
+    nor may "The JGenerator" appear in their names without prior written
+    permission of Dmitry Skavish.
+
+ THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED.  IN NO EVENT SHALL DMITRY SKAVISH OR THE OTHER
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+//ここまで
+
+＠謝辞
+  \sample\mine\フォルダのサンプルは、mine氏が提供してくださったものです
