@@ -1,0 +1,42 @@
+;PDRをランダム生成してそれを読み込んでSWFを作成する
+
+	#include "minghsp.as"
+	#include "swfpreview.as"
+
+	sdim p,0x10000	;初期バッファサイズ
+
+	pn=20	;パスの数
+	p="PDR020\n"
+	p+="640,450,255,255,255,0,60,30,2\n"
+	p+="1,,0,0,1,255\n"
+	p+=""+pn+"\n"
+
+	randomize
+
+	repeat pn
+		an=rnd(40)+1	;アンカーの数
+		f=(rnd(256)<<24) | (rnd(256)<<16) | (rnd(256)<<8) | rnd(256)
+		l=(rnd(256)<<24) | (rnd(256)<<16) | (rnd(256)<<8) | rnd(256)
+		p+=""+an+",#TRUE#,20,1,"+l+",1,"+f+",0,0,0,1,-1,#FALSE#,0,#FALSE#,0\n"
+		repeat an+1
+			flg=rnd(10)
+			if flg<5 :flg=0 :else :flg=1	;このあたりで直線アンカーと曲線アンカーの比率を調節
+			p+=""+flg+","+rnd(640*20)+","+rnd(450*20)+"\n"
+		loop
+	loop
+
+	;bsave "pdrtest.pdr",p,strlen(p)
+
+	SWFShape s
+	;s_loadPdr "pdrtest.pdr",1	;モーフィングのときは第二パラメータを必ず0以外にする
+	s_loadPdr p,0,strlen(p)
+	w=stat & 0xffff				;PDRファイルの幅
+	h=(stat >> 16) & 0xefff		;PDRファイルの高さ
+	SWFMovie m
+	m_add i,s
+	m_setDimension w,h
+	fname="pdrtest.swf"
+	m_save fname
+	mes stat					;作成されたSWFのサイズ
+	swfpreview fname
+	stop

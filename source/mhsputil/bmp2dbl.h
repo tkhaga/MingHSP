@@ -1,3 +1,5 @@
+#ifndef _MINGHSP_BMP2DBL_H_
+#define _MINGHSP_BMP2DBL_H_
 
 typedef struct dbl_data
 {	int length;
@@ -18,3 +20,5 @@ enum BMP2DBL_FORMATS
 int readBMP(FILE *fp, dblData result, int alpha, int level);
 int readGif(char *fileName, dblData result, int alpha2, int level);
 int readPNG(FILE *fp, dblData result, int alpha2, int level);
+
+#endif

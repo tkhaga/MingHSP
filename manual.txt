@@ -354,7 +354,7 @@ sel_m movie
   ・m_save s1
 
     s1  保存ファイル名
-    n3  圧縮率。範囲は-1～9で数値が大きいほど高圧縮(-1は非圧縮)。省略時は-1  (minghsp.hpiのみのパラメータ)
+    n3  圧縮率。範囲は-1～9で数値が大きいほど高圧縮(-1は非圧縮)。省略時は-1
 
     SWFをファイルに保存します。成功するとstatにはそのサイズが代入されます
 
@@ -577,6 +577,46 @@ f3,f4  制御点の相対座標
 
 二次ベジエ曲線を引きます
 
+・s_loadPdr "s1", n2, n3
+
+s1  PDRファイル名もしくはPDRデータが入った変数
+n2  フラグ
+n3  s1がPDRデータの場合はそのサイズを指定
+
+選択されたSWFShapeオブジェクトに対して、s1に指定したPDRに従って描画を行います。
+対応するPDRはPDR Ver0.1, Ver0.2およびPDCLIP Ver0.2です。
+この命令が成功するとstatの下から0-16ビットにPDRの幅サイズ、17-30ビットに高さがピクセル単位で代入されます。
+statの値から幅と高さを取り出すには
+w = stat & 0xffff		;幅
+h = (stat >> 16) & 0xefff	;高さ
+のようにします。
+
+n2に設定できるフラグには次のものがあります
+
+PDR_MORPH
+モーフィングで使用できるようにPDRを読み込みます。
+すでにs_newStylesを使っているSWFShapeオブジェクトでは意味がありません。
+
+PDR_GETRECTONLY
+幅と高さを取得するだけにします。選択されているSWFShapeオブジェクトは変更されません。
+
+PDR_ASCLIP
+PDCLIP形式を読み込む場合、通常はその幅と高さはそれを表現できる最小限のサイズになりますが、これを指定すると、ParaDrawで保存した時の位置に描画されるようになります。
+
+複数同時に指定するには
+s_loadPdr "test.pdr",PDR_MORPH | PDR_GETRECTONLY
+のように"|"演算子で連結してください。
+
+・s_newStyles
+
+選択されたSWFShapeオブジェクトに対して新しく図形を開始します。
+この命令をまたがって同じSWFFillオブジェクトをs_setLeftFill, s_setRightFillに使用することはできません。
+新たにs_addSolidFill, s_addBitmapFill, s_addGradientFillでSWFFillオブジェクトを作成してください。
+この命令を使用するとそのSWFShapeはモーフィングに使用することができなくなります。
+
+この命令を使用する場合、そのSWFShapeオブジェクトでこの命令を使用するまでは決して
+s_setLine, s_addSolidFill, s_addBitmapFill, s_addGradientFillを使用しないでください。
+
 ・i_moveTo f1, f2
 
 f1,f2  オブジェクトを移動させる先の座標
@@ -769,3 +809,15 @@ v1  SWFActionオブジェクトの参照が代入される変数
 v2  SWFAction_saveで保存したオブジェクトデータが代入されている変数
 
 SWFAction_saveで保存したオブジェクトデータからSWFActionオブジェクトを作成します
+
+・mhsp_getaswarn v1, n2
+
+v1  警告の文字列を代入する文字列型変数
+n2  v1に確保されているバッファのサイズ
+
+ActionScriptコンパイラが出した警告の文字列を
+
+・mhsp_getaserror v1, n2
+
+v1  エラーの文字列を代入する文字列型変数
+n2  v1に確保されているバッファのサイズ

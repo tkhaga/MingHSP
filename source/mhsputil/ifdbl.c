@@ -1,4 +1,4 @@
-/* ifdbl.spi DefineBitsLossless/DefineBitsLossless2 to DIB filter Ver 1.0a */
+/* ifdbl.spi DefineBitsLossless/DefineBitsLossless2 to DIB filter Ver 1.0b */
 
 #include <windows.h>
 #include <zlib.h>
@@ -8,9 +8,6 @@
 #endif
 
 #include "mhsputil.h"
-
-#undef EXPORT
-#define EXPORT __declspec(dllexport)
 
 #pragma pack(push, 1)
 typedef struct PictureInfo {
@@ -29,26 +26,29 @@ typedef struct PictureInfo {
 #undef min
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
-static const char *pluginfo[] = {
-	"00IN",
-	"DefineBitsLossless/DefineBitsLossless2 to DIB filter Ver 1.0a (C) THAGA 2005-2006",
-	"*.dbl",
-	"DBL"
-};
-
 typedef int (CALLBACK *SPI_PROGRESS)(int, int, long);
 
-EXPORT int WINAPI GetPluginInfo(int infono, LPSTR buf, int buflen)
+static HINSTANCE hinst;
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-	if (infono < 0 || infono >= 4) 
-		return 0;
+	if (fdwReason == DLL_PROCESS_ATTACH) {
+		hinst = hinstDLL;
+	}
 
-	lstrcpyn(buf, pluginfo[infono], buflen);
-
-	return lstrlen(buf);
+	return TRUE;
 }
 
-EXPORT int WINAPI IsSupported(LPSTR filename, DWORD dw)
+__declspec(dllexport) int WINAPI GetPluginInfo(int infono, LPSTR buf, int buflen)
+{
+	if (infono < 0 || infono >= 4) {
+		return 0;
+	}
+
+	return LoadString(hinst, infono + 1, buf, buflen);
+}
+
+__declspec(dllexport) int WINAPI IsSupported(LPSTR filename, DWORD dw)
 {
 	char *data;
 	char header[DBLHEADERSIZE];
@@ -65,8 +65,9 @@ EXPORT int WINAPI IsSupported(LPSTR filename, DWORD dw)
 		data = (char *)dw;
 	}
 
-	if (data[0] != 'D' || data[1] != 'B')
+	if (data[0] != 'D' || data[1] != 'B') {
 		return 0;
+	}
 
 	if (data[2] == 'l') {
 		bit = data[8];
@@ -78,16 +79,18 @@ EXPORT int WINAPI IsSupported(LPSTR filename, DWORD dw)
 		return 0;
 	}
 
-	if (data[3] != 1 && data[3] != 2)
+	if (data[3] != 1 && data[3] != 2) {
 		return 0;
+	}
 
-	if (bit != 3 && bit != 5)
+	if (bit != 3 && bit != 5) {
 		return 0;
+	}
 
 	return 1;
 }
 
-EXPORT int WINAPI GetPictureInfo(
+__declspec(dllexport) int WINAPI GetPictureInfo(
 		LPSTR buf, long len, unsigned int flag, struct PictureInfo *lpInfo)
 {
 	unsigned char header[DBLHEADERSIZE];
@@ -108,13 +111,15 @@ EXPORT int WINAPI GetPictureInfo(
 			return 6;
 		}
 		CloseHandle(hfile);
-		if (BytesRead != DBLHEADERSIZE)
+		if (BytesRead != DBLHEADERSIZE) {
 			return 2;
+		}
 		data = header;
 	}
 	else {
-		if (len < DBLHEADERSIZE)
+		if (len < DBLHEADERSIZE) {
 			return 2;
+		}
 		data = (unsigned char *)buf;
 	}
 
@@ -198,7 +203,8 @@ int WINAPI GetPicture(
 			LocalFree(data);
 			return 6;
 		}
-	} else {
+	}
+	else {
 		data = (unsigned char *)buf;
 		datasize = len;
 	}
@@ -233,15 +239,16 @@ int WINAPI GetPicture(
 			return 2;
 	}
 
-	width      = getShortBE();
-	height     = getShortBE();
+	width  = getShortBE();
+	height = getShortBE();
 
 	if (pals) {
 		pals = getChar() + 1;
 		imgwidth = dibwidth = (width + 3) & ~3;
 		palsize = pals * (2 + hasalpha);
 		infosize += sizeof(RGBQUAD) * 256;
-	} else {
+	}
+	else {
 		dibwidth = (width * 3 + 3) & ~3;
 		imgwidth = width * 4;
 		palsize = 0;
@@ -251,12 +258,14 @@ int WINAPI GetPicture(
 	dibsize = dibwidth * height;
 
 	hdbl = HeapCreate(0, imgsize, 0);
-	if (!hdbl)
+	if (!hdbl) {
 		return 4;
+	}
 
 	imgdata = HeapAlloc(hdbl, HEAP_ZERO_MEMORY, imgsize);
-	if (!imgdata)
+	if (!imgdata) {
 		return 4;
+	}
 
 	outsize = imgsize;
 	if (uncompress(imgdata, &outsize, (unsigned char *)IOgetPtr(), srcsize) != Z_OK) {
@@ -273,10 +282,13 @@ int WINAPI GetPicture(
 	*pHBm    = LocalAlloc(LMEM_MOVEABLE, dibsize);
 
 	if (!*pHBInfo || !*pHBm) {
-		if (*pHBInfo)
+		if (*pHBInfo) {
 			LocalFree(*pHBInfo);
-		if (*pHBm)
+		}
+		if (*pHBm) {
 			LocalFree(*pHBm);
+		}
+		HeapDestroy(hdbl);
 		return 4;
 	}
 
@@ -285,6 +297,7 @@ int WINAPI GetPicture(
 	if (!pinfo || !pbmdat) {
 		LocalFree(*pHBInfo);
 		LocalFree(*pHBm);
+		HeapDestroy(hdbl);
 		return 5;
 	}
 
@@ -387,13 +400,14 @@ int WINAPI GetPicture(
 	LocalUnlock(*pHBInfo);
 	LocalUnlock(*pHBm);
 
-	if (!(flag & 7))
+	if (!(flag & 7)) {
 		LocalFree(data);
+	}
 
 	return 0;
 }
 
-EXPORT int WINAPI GetPreview(
+__declspec(dllexport) int WINAPI GetPreview(
 	LPSTR buf, long len, unsigned int flag,
 	HANDLE *pHBInfo, HANDLE *pHBm,
 	SPI_PROGRESS lpPrgressCallback, long lData)

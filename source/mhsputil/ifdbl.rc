@@ -1,0 +1,8 @@
+STRINGTABLE
+LANGUAGE 1041, 0x1
+{
+1, 	"00IN"
+2, 	"DefineBitsLossless/DefineBitsLossless2 to DIB filter Ver 1.0b (C) THAGA 2005-2006"
+3, 	"*.dbl"
+4, 	"DBL"
+}

@@ -12,10 +12,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <zlib.h>
 
 #include "ming_config.h"
 #include "libming.h"
+
+#if USE_BMP
+#include <zlib.h>
 
 #include "bitmap.h"
 #include "dbl.h"
@@ -23,8 +25,7 @@
 
 #define BMP_HEADERSIZE 54	/* sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) */
 
-#if 1
-int readBMP(SWFInput input, dblData result)
+static int readBMP(SWFInput input, dblData result)
 {
 	unsigned char *imgdata, *tmpbuf;
 	int index, pals = 0, palinc, palsize;
@@ -143,7 +144,7 @@ int readBMP(SWFInput input, dblData result)
 
 		paldata = malloc(palsize);
 		SWFInput_seek(input, 14 + bihsize, SEEK_SET);
-		SWFInput_read(input, (char *)paldata, palsize);
+		SWFInput_read(input, paldata, palsize);
 
 		p = tmpbuf;
 		pp = paldata;
@@ -159,7 +160,7 @@ int readBMP(SWFInput input, dblData result)
 		imgdata = malloc(imgsize);
 		if (offbits > 0)
 			SWFInput_seek(input, offbits, SEEK_SET);
-		if (SWFInput_read(input, (char *)imgdata, imgsize) != imgsize) {
+		if (SWFInput_read(input, imgdata, imgsize) != imgsize) {
 			/* printf("Read error"); */
 			return 0;
 		}
@@ -212,7 +213,7 @@ int readBMP(SWFInput input, dblData result)
 			/* 規格上はパレットが存在することがあるが使わないので読み飛ばす */
 			SWFInput_seek(input, 14 + bihsize + palsize, SEEK_SET);
 		}
-		if (SWFInput_read(input, (char *)imgdata, imgsize) != imgsize) {
+		if (SWFInput_read(input, imgdata, imgsize) != imgsize) {
 			/* printf("Read error"); */
 			return 0;
 		}
