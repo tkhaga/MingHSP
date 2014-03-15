@@ -6,10 +6,22 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../src/blocks/input.h"
 #include "../src/blocks/output.h"
+#include "../src/libming.h"
 
 #include "mhsputil.h"
+
+#define NUM_SAMPLE 1024*512
+
+typedef struct{
+  short channels;
+  short format;
+  unsigned int srate;
+  short bits;
+  unsigned int datasize;
+} WAV_INFO;
 
 /*
  * ADPCM tables
@@ -56,7 +68,7 @@ static const int piStepSizeTable[89] =
     15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
 };
 
-void writeADPCMData(short *samples, int stereo, int sample_count, void* output) {
+void writeADPCMData(SWFInput input, int bits16, int stereo, int sample_count, SWFOutput output) {
   int nBits = 4;  /* number of bits per ADPCM sample */
   int iSignBit = 1 << (nBits-1);  /* Sign bit mask */
   const int*  piIndexTable = ppiIndexTables[nBits-2];  /* Select index table to use */
@@ -68,19 +80,31 @@ void writeADPCMData(short *samples, int stereo, int sample_count, void* output) 
   int iSampleCount = sample_count;  /* Number of samples. */
   int iChannelCount = 1 + stereo;  /* Number of channels (mono, stereo) */
 
-  short*  psSample = samples;  /* Pointer to start of 16-bit/sample data */
+  short*  psSample = malloc(sizeof(short) * NUM_SAMPLE * iChannelCount);  /* Pointer to start of 16-bit/sample data */
 
-  int i;
+  int i, j;
+  int sindex = NUM_SAMPLE * iChannelCount;
 
   /* Write number of bits per ADPCM sample */
   SWFOutput_writeBits(output, nBits-2, 2);
 
   for (i=0; i < iSampleCount; i++) {
+	if (sindex == NUM_SAMPLE * iChannelCount) {
+		if (bits16) {
+			for (j = 0; j < min(NUM_SAMPLE, iSampleCount - i) * iChannelCount; j++)
+				psSample[j] = (short)SWFInput_getSInt16(input);
+		}
+		else {
+			for (j = 0; j < min(NUM_SAMPLE, iSampleCount - i) * iChannelCount; j++)
+				psSample[j] = (short)SWFInput_getChar(input);
+		}
+		sindex = 0;
+	}
     if ((i & 0xfff) == 0) {
       int c;
       for (c=0; c<iChannelCount; c++) {
 	/* First sample in the block, so no delta */
-	short sSample = *psSample++;
+	short sSample = psSample[sindex++];
 	int iDiff;
 
 	/* Write full 16-bit sample */
@@ -89,9 +113,9 @@ void writeADPCMData(short *samples, int stereo, int sample_count, void* output) 
 
 	/* Calculate initial index & step */
 	if (iSampleCount == 1)  /* XXX - stereo OK? */
-	  iDiff = abs(*psSample - sSample);
+	  iDiff = abs(psSample[sindex] - sSample);
 	else
-	  iDiff = abs(*(psSample+1) - sSample);
+	  iDiff = abs(psSample[sindex+1] - sSample);
 	for (iIndex[c]=0; iIndex[c] < 88; iIndex[c]++)
 	  if (iDiff <= piStepSizeTable[iIndex[c]])
 	    break;
@@ -107,7 +131,7 @@ void writeADPCMData(short *samples, int stereo, int sample_count, void* output) 
     } else {
       int c;
       for (c=0; c<iChannelCount; c++) {
-	short sSample = *psSample++;
+	short sSample = psSample[sindex++];
 	int iDiff, iSign, iDelta, iVPDiff;
 	int k;
 
@@ -167,14 +191,8 @@ void writeADPCMData(short *samples, int stereo, int sample_count, void* output) 
       }
     }
   }
+  free(psSample);
 }
-typedef struct{
-  short channels;
-  short format;
-  unsigned int srate;
-  short bits;
-  unsigned int datasize;
-} WAV_INFO;
 
 WAV_INFO readWAVheader(SWFInput input)
 {
@@ -212,27 +230,28 @@ notwave:
   return info;
 }
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   FILE *fp_in, *fp_out;
   SWFInput input;
   SWFOutput output;
-  short *samples, *i_sample;
   unsigned int i, type, bits16, stereo, sample_count;
   char *fname;
   char *tmp, *tmp2;
   WAV_INFO wav;
 
   if (argc < 2) {
-    printf("%s converts a raw sound data to adpcm compressed.\
-\n\nUsage:\
-\n%s in out [16bit] [stereo]\
-\n\n\
-\nin     : the filename of input file, raw sound data\
-\nout    : the filename of output file, ADPCM compressed\
-\n16bit  : bits per sample     0=8bit 1=16bit   default=1=16bit\
-\nstereo : number of channels  0=mono 1=stereo  default=1=stereo\
-", argv[0], argv[0]);
+    printf(
+"%s converts a raw sound data to adpcm compressed.\n"
+"\n"
+"Usage:\n"
+"%s in out [16bit] [stereo]\n"
+"\n"
+"in     : the filename of input file, raw sound data\n"
+"out    : the filename of output file, ADPCM compressed\n"
+"16bit  : bits per sample     0=8bit 1=16bit   default=1=16bit\n"
+"stereo : number of channels  0=mono 1=stereo  default=1=stereo\n"
+, argv[0], argv[0]);
     exit(0);
   }
 
@@ -281,30 +300,18 @@ void main(int argc, char *argv[])
     if (wav.bits == 8)
       bits16 = 0;
     sample_count = wav.datasize / (1+bits16) / (1+stereo);
-  }else{
+  }
+  else {
     sample_count = SWFInput_length(input) / (1+bits16) / (1+stereo);
   }
-  samples = malloc(sizeof(short) * sample_count * (1+stereo));
-  i_sample = samples;
-  if (bits16)
-  {
-    for (i=0; i<sample_count*(1+stereo); i++) {
-      *i_sample = (short)SWFInput_getSInt16(input);
-      i_sample++;
-    }
-  }else{
-    for (i=0; i<sample_count*(1+stereo); i++) {
-      *i_sample = (short)SWFInput_getChar(input);
-      i_sample++;
-    }
-  }
-  destroySWFInput(input);
-  fclose(fp_in);
 
   /* create a SWFOutput */
   output = newSWFOutput();
 
-  writeADPCMData(samples, stereo, sample_count, output);
+  writeADPCMData(input, bits16, stereo, sample_count, output);
+
+  destroySWFInput(input);
+  fclose(fp_in);
 
   /* write to file */
   SWFOutput_writeToMethod(output, fileOutputMethod, fp_out);

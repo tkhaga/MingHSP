@@ -99,6 +99,8 @@
 	#func destroy_b destroy_b 0
 	#func destroy_a destroy_a 0
 	#func destroy_snd destroy_snd 0
+	#func destroy_v destroy_v 0
+	#func destroy_pc destroy_pc 0
 
 	#func mhsp_float mhsp_float 1
 	#func mhsp_add mhsp_add 1
@@ -118,6 +120,7 @@
 	#func Ming_useSWFVersion ming_useSWFVersion 0
 	#func SWFBUTTON_KEYPRESS swfbutton_keypress 5
 	#func Ming_useConstants ming_useConstants 0
+	#func Ming_setSWFCompression ming_setSWFCompression 0
 
 ;SWFMovie
 	#func SWFMovie mhsp_SWFMovie 1
@@ -141,6 +144,7 @@
 	#func m_addExport m_addExport 4
 	#func m_writeExports m_writeExports 0
 	#func m_Protect m_Protect 0
+	#func m_namedAnchor m_namedAnchor 6
 
 ;SWFShape
 	#func SWFShape mhsp_SWFShape 1
@@ -305,6 +309,9 @@
 	#func si_loopInPoint si_loopInPoint 0
 	#func si_loopOutPoint si_loopOutPoint 0
 	#func si_loopCount si_loopCount 0
+
+;SWFPrebuiltClip
+	#func SWFPrebuiltClip mhsp_SWFPrebuiltClip 5
 
 	#module
 

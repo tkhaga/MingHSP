@@ -1,11 +1,4 @@
-#CC = gcc -g -pg -a	# profiling flags
-#CC = gcc -O5
-CC = gcc -O2 -Wall -I. ${CFLAGS} #-fPIC -ggdb
-LDFLAGS = -lm -lz # -ldmalloc
-
-LIBDIR = /usr/local/lib
-
-include ../config.make
+include ../Makefile.config
 
 OFILES = \
 	blocklist.o \
@@ -18,7 +11,8 @@ OFILES = \
 	position.o \
 	shape_cubic.o \
 	shape_util.o \
-	text_util.o
+	text_util.o \
+	gc.o
 
 COMPILEROFILES = actioncompiler/compile.o \
 		 actioncompiler/swf4compiler.tab.o \
@@ -37,25 +31,32 @@ all: minghsp
 
 minghsp: ${OFILES} ${MHSP}
 	cd .. && make static
-	dllwrap --def minghsp.def -s -o minghsp.hpi ${MHSP} libming.a -lungif -lpng -lz
+	windres minghsp.rc -o minghsp.coff
+	dllwrap --def minghsp.def -s -mwindows -o minghsp.hpi ${MHSP} minghsp.coff libming.a -lungif -lpng -lz
 
-dynamic: ${OFILES}
-	cd blocks && make
-	cd actioncompiler && make
-	${CC} ${OFILES} ${COMPILEROFILES} ${LDFLAGS} ${EXTRA_LIBS} blocks/*.o -shared -o libming.so
-	cp libming.so ..
+dynamic: $(SHAREDLIB)
 
-static: ${OFILES}
-	cd blocks && make
-	cd actioncompiler && make
+$(SHAREDLIB): $(OFILES)
+	cd blocks && $(MAKE) CFLAGS="$(CFLAGS) -I.."
+	cd actioncompiler && $(MAKE) CFLAGS="$(CFLAGS) -I.."
+	$(CC) $(OFILES) $(COMPILEROFILES) $(LDFLAGS) $(EXTRA_LIBS) blocks/*.o $(SHLIBLDFLAGS) -o $(SHAREDLIB)
+	cp $(SHAREDLIB) ..
+	ln -fs $(SHAREDLIB) ../libming$(NOVAR_SHLIBEXT)
+	ln -fs $(SHAREDLIB) ../libming$(SHORT_SHLIBEXT)
+
+static: libming.a
+
+libming.a: $(OFILES)
+	cd blocks && $(MAKE)
+	cd actioncompiler && $(MAKE)
 	ar r libming.a blocks/*.o ${OFILES} ${COMPILEROFILES}
 	ranlib libming.a  # bsd requires this?
 	cp libming.a ..
 
 clean:
-	cd blocks && make clean
-	cd actioncompiler && make clean
-	rm -f *.o libming.a libming.so test test.exe core *.core
+	cd blocks && $(MAKE) clean
+	cd actioncompiler && $(MAKE) clean
+	rm -f *.o libming.a $(SHAREDLIB) libming$(NOVAR_SHLIBEXT) test test.exe core *.core
 
 # breaks on bsd:
 #.c.o: .c .h

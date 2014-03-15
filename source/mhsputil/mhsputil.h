@@ -1,6 +1,6 @@
 
+void ChangeExt(char *fname, const char *ext);
 int GetNum(const char *p);
-void ChangeExt(unsigned char *fname, const char *ext);
 
 void InitIO(unsigned char *p, unsigned long offset);
 void IOseek(long dest);

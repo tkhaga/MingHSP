@@ -12,6 +12,7 @@
 #else
 #include "ming.h"
 #endif
+#include "formats.h"
 #include "toutf8.h"
 #include "hspdll.h"
 
@@ -32,12 +33,10 @@ float SWFDisplayItem_get_ySkew(SWFDisplayItem item);
 float SWFDisplayItem_get_rot(SWFDisplayItem item);
 void SWFMovie_protect(SWFMovie movie);
 void SWFMovie_writeExports(SWFMovie movie);
-#endif
 
-int isJPEG(SWFInput input);
-int isDBL(SWFInput input);
-int isPNG(SWFInput input);
-int isGIF(SWFInput input);
+void destroySWFVideoStream(SWFVideoStream stream);
+void destroySWFPrebuiltClip(SWFPrebuiltClip clip);
+#endif
 
 SWFShape mhsp_shape = NULL;
 SWFMovie mhsp_movie = NULL;
@@ -66,26 +65,24 @@ int warnlimit;
 int warnsize = 0;
 char buf[MHSP_STRMAX];
 
-char drawCubicTo_flag = 0;
+int drawCubicTo_flag = 0;
 float ct1, ct2;
 
-char drawCubic_flag = 0;
+int drawCubic_flag = 0;
 float c1, c2;
 
-char setMatrix_flag = 0;
+int setMatrix_flag = 0;
 float m1, m2;
 
-char addEntry_flag = 0;
-unsigned char e;
+int addEntry_flag = 0;
+unsigned int e;
 
 int idx, bufsize;
 
 void mhsp_method(byte b, byte *data)
 {
 	if (idx < bufsize)
-	{
 		data[idx++] = b;
-	}
 }
 
 void mhsp_error(const char *msg, ...)
@@ -117,7 +114,7 @@ void mhsp_warn(const char *msg, ...)
 	len = lstrlen(funcname) + lstrlen(buf) + 4;
 	warnsize += len;
 	if (warnsize < warnlimit && warnbuf != NULL)
-		warnbuf += snprintf(warnbuf, len, "%s: %s\r\n", funcname, buf);
+		warnbuf += sprintf(warnbuf, "%s: %s\r\n", funcname, buf);
 
 	va_end(args);
 }
@@ -125,8 +122,13 @@ void mhsp_warn(const char *msg, ...)
 EXPORT BOOL WINAPI mhsp_init(int p1, int p2, int p3, int p4)
 {
 	Ming_init();
+#ifdef JAMING
+	Ming_setErrorFunction((void (*)(char *msg, ...))mhsp_error);
+	Ming_setWarnFunction((void (*)(char *msg, ...))mhsp_warn);
+#else
 	Ming_setErrorFunction(mhsp_error);
 	Ming_setWarnFunction(mhsp_warn);
+#endif
 	return 0;
 }
 
@@ -164,6 +166,12 @@ EXPORT BOOL WINAPI ming_useConstants(int flag, int p2, int p3, int p4)
 	Ming_useConstants(flag);
 	return 0;
 }
+
+EXPORT BOOL WINAPI ming_setSWFCompression(int level, int p2, int p3, int p4)
+{
+	lstrcpy(funcname, "Ming_setSWFCompression");
+	return -Ming_setSWFCompression(level);
+}
 #endif
 
 //SWFMovie
@@ -171,12 +179,9 @@ EXPORT BOOL WINAPI ming_useConstants(int flag, int p2, int p3, int p4)
 EXPORT BOOL WINAPI mhsp_SWFMovie(SWFMovie *p1, int version, int p3, int p4)
 {
 	lstrcpy(funcname, "SWFMovie");
-	if (version)
-	{
+	if (version) {
 		*p1 = newSWFMovieWithVersion(version);
-	}
-	else
-	{
+	} else {
 		*p1 = newSWFMovie();
 	}
 	if (!mhsp_movie)
@@ -194,11 +199,16 @@ EXPORT BOOL WINAPI m_save(void *p1, char *filename, int p3, int p4)
 EXPORT BOOL WINAPI m_save(HSPEXINFO *hei, int p2, int p3, int p4)
 {
 	char *filename;
-	int level;
+	int level, oldval, size;
 	lstrcpy(funcname, "m_save");
 	filename = hei->HspFunc_prm_gets();
 	level = hei->HspFunc_prm_getdi(-1);
-	return -SWFMovie_save(mhsp_movie, filename, level);
+	if (level < -1 || level > 9)
+		return -1;
+	oldval = Ming_setSWFCompression(level);
+	size = -SWFMovie_save(mhsp_movie, filename);
+	Ming_setSWFCompression(oldval);
+	return size;
 }
 #endif
 
@@ -223,13 +233,18 @@ EXPORT BOOL WINAPI m_output(void *data, int p2, int p3, int p4)
 EXPORT BOOL WINAPI m_output(HSPEXINFO *hei, int p2, int p3, int p4)
 {
 	char *data;
-	int level;
+	int level, oldval, size;
 	lstrcpy(funcname, "m_output");
 	data = (char *)hei->HspFunc_prm_getv();
 	bufsize = hei->HspFunc_prm_geti();
 	level = hei->HspFunc_prm_getdi(-1);
+	if (level < -1 || level > 9)
+		return -1;
+	oldval = Ming_setSWFCompression(level);
 	idx = 0;
-	return -SWFMovie_output(mhsp_movie, (SWFByteOutputMethod)mhsp_method, data, level);
+	size = -SWFMovie_output(mhsp_movie, (SWFByteOutputMethod)mhsp_method, data);
+	Ming_setSWFCompression(oldval);
+	return size;
 }
 #endif
 
@@ -287,7 +302,7 @@ EXPORT BOOL WINAPI m_streamMp3(void *p1, char *mp3FileName, int p3, int p4)
 {
 	FILE *fp = fopen(mp3FileName, "rb");
 	if (!fp)
-		return -1;
+		return 1;
 	lstrcpy(funcname, "m_streamMp3");
 	SWFMovie_setSoundStream(mhsp_movie, newSWFSoundStream(fp));
 	return 0;
@@ -304,7 +319,7 @@ EXPORT BOOL WINAPI m_addSound(SWFDisplayItem *p1, char *file, int flags, int p4)
 {
 	FILE *fp = fopen(file, "rb");
 	if (!fp)
-		return -1;
+		return 1;
 	lstrcpy(funcname, "m_addSound");
 	*p1 = SWFMovie_add(mhsp_movie, newSWFSound(fp, (byte)flags));
 	if (!mhsp_item)
@@ -314,13 +329,13 @@ EXPORT BOOL WINAPI m_addSound(SWFDisplayItem *p1, char *file, int flags, int p4)
 
 EXPORT BOOL WINAPI m_addSound_buf(HSPEXINFO *hei, int p2, int p3, int p4)
 {
-	char *buf;
+	unsigned char *buf;
 	byte flags;
 	int size;
 	SWFDisplayItem *p1;
 	lstrcpy(funcname, "m_addSound_buf");
 	p1 = (SWFDisplayItem *)hei->HspFunc_prm_getv();
-	buf = (char *)hei->HspFunc_prm_getv();
+	buf = (unsigned char *)hei->HspFunc_prm_getv();
 	size = hei->HspFunc_prm_geti();
 	flags = (byte)hei->HspFunc_prm_getdi(0);
 	*p1 = SWFMovie_add(mhsp_movie, newSWFSound_fromInput(newSWFInput_allocedBuffer(buf, size), flags));
@@ -360,7 +375,7 @@ EXPORT BOOL WINAPI m_streamMp3(void *p1, char *mp3FileName, float skip, int p4)
 	FILE *fp = fopen(mp3FileName, "rb");
 	SWFSoundStream sound;
 	if (!fp)
-		return -1;
+		return 1;
 	lstrcpy(funcname, "m_streamMp3");
 	sound = newSWFSoundStream(fp);
 	SWFMovie_setSoundStreamAt(mhsp_movie, sound, skip);
@@ -448,6 +463,13 @@ EXPORT BOOL WINAPI m_Protect(int p1, int p2, int p3, int p4)
 {
 	lstrcpy(funcname, "m_protect");
 	SWFMovie_protect(mhsp_movie);
+	return 0;
+}
+
+EXPORT BOOL WINAPI m_namedAnchor(int p1, const char *label, int p3, int p4)
+{
+	lstrcpy(funcname, "m_namedAnchor");
+	SWFMovie_namedAnchor(mhsp_movie, label);
 	return 0;
 }
 #endif
@@ -604,14 +626,11 @@ EXPORT BOOL WINAPI s_drawArc(int r, float startAngle, float endAngle, int p4)
 
 EXPORT BOOL WINAPI s_drawCubicTo(float bx, float by, float cx, float cy)
 {
-	if (drawCubicTo_flag)
-	{
+	if (drawCubicTo_flag) {
 		lstrcpy(funcname, "s_drawCubicTo");
 		SWFShape_drawCubicTo(mhsp_shape, bx, by, cx, cy, ct1, ct2);
 		drawCubicTo_flag = 0;
-	}
-	else
-	{
+	} else {
 		ct1 = bx;
 		ct2 = by;
 		drawCubicTo_flag = 1;
@@ -621,14 +640,11 @@ EXPORT BOOL WINAPI s_drawCubicTo(float bx, float by, float cx, float cy)
 
 EXPORT BOOL WINAPI s_drawCubic(float bx, float by, float cx, float cy)
 {
-	if (drawCubic_flag)
-	{
+	if (drawCubic_flag) {
 		lstrcpy(funcname, "s_drawCubic");
 		SWFShape_drawCubic(mhsp_shape, bx, by, cx, cy, c1, c2);
 		drawCubic_flag = 0;
-	}
-	else
-	{
+	} else {
 		c1 = bx;
 		c2 = by;
 		drawCubic_flag = 1;
@@ -786,9 +802,7 @@ EXPORT BOOL WINAPI i_setMatrix(float a, float b, float c, float d)
 		lstrcpy(funcname, "i_setMatrix");
 		SWFDisplayItem_setMatrix(mhsp_item, a, b, c, d, m1, m2);
 		setMatrix_flag = 0;
-	}
-	else
-	{
+	} else {
 		m1 = a;
 		m2 = b;
 		setMatrix_flag = 1;
@@ -889,14 +903,11 @@ EXPORT BOOL WINAPI mhsp_SWFGradient(SWFGradient *p1, int p2, int p3, int p4)
 
 EXPORT BOOL WINAPI g_addEntry(float ratio, int p2, int p3, int p4)
 {
-	if (addEntry_flag)
-	{
+	if (addEntry_flag) {
 		lstrcpy(funcname, "g_addEntry");
 		SWFGradient_addEntry(mhsp_gradient, ratio, p2 & 0xff, p3 & 0xff, p4 & 0xff, e & 0xff);
 		addEntry_flag = 0;
-	}
-	else
-	{
+	} else {
 		e = p2;
 		addEntry_flag = 1;
 	}
@@ -917,25 +928,22 @@ EXPORT BOOL WINAPI mhsp_SWFBitmap(HSPEXINFO *hei, int p2, int p3, int p4)
 	lstrcpyn(alpha, hei->HspFunc_prm_getds(""), MHSP_STRMAX);
 	fp1 = fopen(filename, "rb");
 	if (!fp1)
-		return -2;	/* 第２引数に指定したファイルを開けない */
+		return 1;
 	input = newSWFInput_file(fp1);
 	fp2 = fopen(alpha, "rb");
-	if (fp2 && isJPEG(input))
-	{
+	if (fp2 && isJPEG(input)) {
 		SWFInput_seek(input, 0, SEEK_SET);
 		*p1 = (SWFBitmap)newSWFJpegWithAlpha_fromInput(input, newSWFInput_file(fp2));
 	}
 #ifdef JAMING
 	else if (isDBL(input) || isJPEG(input))
 #else
-	else if (isDBL(input) || isJPEG(input) || isGIF(input) || isPNG(input))
+	else if (isDBL(input) || isJPEG(input) || isGIF(input) || isPNG(input) || isBMP(input))
 #endif
 	{
 		SWFInput_seek(input, 0, SEEK_SET);
 		*p1 = newSWFBitmap_fromInput(input);
-	}
-	else
-	{
+	} else {
 		return -1;	/* 非対応フォーマット */
 	}
 	if (!mhsp_bitmap)
@@ -945,15 +953,15 @@ EXPORT BOOL WINAPI mhsp_SWFBitmap(HSPEXINFO *hei, int p2, int p3, int p4)
 
 EXPORT BOOL WINAPI mhsp_SWFBitmap_buf(HSPEXINFO *hei, int p2, int p3, int p4)
 {
-	char *buf, *buf2;
+	unsigned char *buf, *buf2;
 	int size, size2;
 	SWFInput input;
 	SWFBitmap *p1;
 	lstrcpy(funcname, "SWFBitmap_buf");
 	p1 = (SWFBitmap *)hei->HspFunc_prm_getv();
-	buf = (char *)hei->HspFunc_prm_getv();
+	buf = (unsigned char *)hei->HspFunc_prm_getv();
 	size = hei->HspFunc_prm_geti();
-	buf2 = (char *)hei->HspFunc_prm_getv();
+	buf2 = (unsigned char *)hei->HspFunc_prm_getv();
 	size2 = hei->HspFunc_prm_getdi(0);
 	input = newSWFInput_allocedBuffer(buf, size);
 	if (size2 && isJPEG(input))
@@ -965,14 +973,12 @@ EXPORT BOOL WINAPI mhsp_SWFBitmap_buf(HSPEXINFO *hei, int p2, int p3, int p4)
 #ifdef JAMING
 	else if (isDBL(input) || isJPEG(input))
 #else
-	else if (isDBL(input) || isJPEG(input) || isGIF(input) || isPNG(input))
+	else if (isDBL(input) || isJPEG(input) || isGIF(input) || isPNG(input) || isBMP(input))
 #endif
 	{
 		SWFInput_seek(input, 0, SEEK_SET);
 		*p1 = newSWFBitmap_fromInput(newSWFInput_allocedBuffer(buf, size));
-	}
-	else
-	{
+	} else {
 		return -1;
 	}
 	if (!mhsp_bitmap)
@@ -1114,10 +1120,10 @@ EXPORT BOOL WINAPI t_moveTo(float x, float y, int p3, int p4)
 EXPORT BOOL WINAPI t_addString(void *p1, char *string, int p3, int p4)
 {
 #ifdef JAMING
-	char *out;
+	unsigned char *out;
 	lstrcpy(funcname, "t_addString");
 	out = toutf8(string);
-	SWFText_addString(mhsp_text, out, NULL);
+	SWFText_addString(mhsp_text, (char *)out, NULL);
 	free(out);
 #else
 	lstrcpy(funcname, "t_addString");
@@ -1126,17 +1132,17 @@ EXPORT BOOL WINAPI t_addString(void *p1, char *string, int p3, int p4)
 	return 0;
 }
 
-EXPORT BOOL WINAPI t_getWidth(float *p1, unsigned char *string, int p3, int p4)
+EXPORT BOOL WINAPI t_getWidth(float *p1, char *string, int p3, int p4)
 {
 #ifdef JAMING
-	char *out;
+	unsigned char *out;
 	lstrcpy(funcname, "t_getWidth");
 	out = toutf8(string);
-	*p1 = SWFText_getStringWidth(mhsp_text, out);
+	*p1 = SWFText_getStringWidth(mhsp_text, (char *)out);
 	free(out);
 #else
 	lstrcpy(funcname, "t_getWidth");
-	*p1 = SWFText_getStringWidth(mhsp_text, string);
+	*p1 = SWFText_getStringWidth(mhsp_text, (unsigned char *)string);
 #endif
 	return 0;
 }
@@ -1164,17 +1170,17 @@ EXPORT BOOL WINAPI t_getLeading(float *p1, int p2, int p3, int p4)
 #ifndef JAMING
 EXPORT BOOL WINAPI t_addUTF8String(void *p1, char *string, int p3, int p4)
 {
-	char *out;
+	unsigned char *out;
 	lstrcpy(funcname, "t_addUTF8String");
 	out = toutf8(string);
-	SWFText_addUTF8String(mhsp_text, out, NULL);
+	SWFText_addUTF8String(mhsp_text, (char *)out, NULL);
 	free(out);
 	return 0;
 }
 
-EXPORT BOOL WINAPI t_getUTF8Width(float *p1, unsigned char *string, int p3, int p4)
+EXPORT BOOL WINAPI t_getUTF8Width(float *p1, char *string, int p3, int p4)
 {
-	char *out;
+	unsigned char *out;
 	lstrcpy(funcname, "t_getUTF8Width");
 	out = toutf8(string);
 	*p1 = SWFText_getUTF8StringWidth(mhsp_text, out);
@@ -1189,20 +1195,17 @@ EXPORT BOOL WINAPI mhsp_SWFFont(SWFFont *p1, char *name, int p3, int p4)
 {
 	lstrcpy(funcname, "SWFFont");
 	FILE *font = fopen(name, "rb");
-	if (font)
-	{
+	if (font) {
 		if (fgetc(font) != 'f' || fgetc(font) != 'd' ||
 			 fgetc(font) != 'b' || fgetc(font) != '0')
 			return -1;
 		fseek(font, 0, SEEK_SET);
 		*p1 = loadSWFFontFromFile(font);
 		fclose(font);
-	}
-	else
-	{
-		char *out;
+	} else {
+		unsigned char *out;
 		out = toutf8(name);
-		*p1 = (SWFFont)newSWFBrowserFont(out);	/* 本当は違うけど */
+		*p1 = (SWFFont)newSWFBrowserFont((char *)out);	/* 本当は違うけど */
 		free(out);
 	}
 	if (!mhsp_font)
@@ -1210,17 +1213,17 @@ EXPORT BOOL WINAPI mhsp_SWFFont(SWFFont *p1, char *name, int p3, int p4)
 	return 0;
 }
 
-EXPORT BOOL WINAPI fnt_getWidth(float *p1, unsigned char *string, int p3, int p4)
+EXPORT BOOL WINAPI fnt_getWidth(float *p1, char *string, int p3, int p4)
 {
 #ifdef JAMING
-	char *out;
+	unsigned char *out;
 	lstrcpy(funcname, "fnt_getWidth");
 	out = toutf8(string);
-	*p1 = SWFFont_getStringWidth(mhsp_font, out);
+	*p1 = SWFFont_getStringWidth(mhsp_font, (char *)out);
 	free(out);
 #else
 	lstrcpy(funcname, "fnt_getWidth");
-	*p1 = SWFFont_getStringWidth(mhsp_font, string);
+	*p1 = SWFFont_getStringWidth(mhsp_font, (unsigned char *)string);
 #endif
 	return 0;
 }
@@ -1256,9 +1259,9 @@ EXPORT BOOL WINAPI fnt_getLeading(float *p1, int p2, int p3, int p4)
 }
 
 #ifndef JAMING
-EXPORT BOOL WINAPI fnt_getUTF8Width(float *p1, unsigned char *string, int p3, int p4)
+EXPORT BOOL WINAPI fnt_getUTF8Width(float *p1, char *string, int p3, int p4)
 {
-	char *out;
+	unsigned char *out;
 	lstrcpy(funcname, "fnt_getUTF8Width");
 	out = toutf8(string);
 	*p1 = SWFFont_getUTF8StringWidth(mhsp_font, out);
@@ -1372,10 +1375,10 @@ EXPORT BOOL WINAPI tf_setName(void *p1, char *name, int p3, int p4)
 EXPORT BOOL WINAPI tf_addString(void *p1, char *string, int p3, int p4)
 {
 #ifdef JAMING
-	char *out;
+	unsigned char *out;
 	lstrcpy(funcname, "tf_addString");
 	out = toutf8(string);
-	SWFTextField_addString(mhsp_field, out);
+	SWFTextField_addString(mhsp_field, (char *)out);
 	free(out);
 #else
 	lstrcpy(funcname, "tf_addString");
@@ -1401,10 +1404,10 @@ EXPORT BOOL WINAPI tf_setPadding(float padding, int p2, int p3, int p4)
 
 EXPORT BOOL WINAPI tf_addUTF8String(void *p1, char *string, int p3, int p4)
 {
-	char *out;
+	unsigned char *out;
 	lstrcpy(funcname, "tf_addUTF8String");
 	out = toutf8(string);
-	SWFTextField_addUTF8String(mhsp_field, out);
+	SWFTextField_addUTF8String(mhsp_field, (char *)out);
 	free(out);
 	return 0;
 }
@@ -1482,7 +1485,7 @@ EXPORT BOOL WINAPI mc_addSound(SWFDisplayItem *p1, char *file, int flags, int p4
 {
 	FILE *fp = fopen(file, "rb");
 	if (!fp)
-		return -1;
+		return 1;
 	lstrcpy(funcname, "mc_addSound");
 	*p1 = SWFMovieClip_add(mhsp_movieclip, newSWFSound(fp, (byte)flags));
 	if (!mhsp_item)
@@ -1492,13 +1495,13 @@ EXPORT BOOL WINAPI mc_addSound(SWFDisplayItem *p1, char *file, int flags, int p4
 
 EXPORT BOOL WINAPI mc_addSound_buf(HSPEXINFO *hei, int p2, int p3, int p4)
 {
-	char *buf;
+	unsigned char *buf;
 	int size;
 	byte flags;
 	SWFDisplayItem *p1;
 	lstrcpy(funcname, "mc_addSound_buf");
 	p1 = (SWFDisplayItem *)hei->HspFunc_prm_getv();
-	buf = (char *)hei->HspFunc_prm_getv();
+	buf = (unsigned char *)hei->HspFunc_prm_getv();
 	size = hei->HspFunc_prm_geti();
 	flags = hei->HspFunc_prm_getdi(0);
 	*p1 = SWFMovieClip_add(mhsp_movieclip, newSWFSound_fromInput(newSWFInput_allocedBuffer(buf, size), flags));
@@ -1630,16 +1633,13 @@ EXPORT BOOL WINAPI mhsp_SWFAction(SWFAction *p1, char *script, int p3, int p4)
 EXPORT BOOL WINAPI mhsp_SWFVideoStream(SWFVideoStream *p1, char *filename, int p3, int p4)
 {
 	lstrcpy(funcname, "SWFVideoStream");
-	if (*filename == '\0')
-	{
+	if (*filename == '\0') {
 		*p1 = newSWFVideoStream();
-	}
-	else
-	{
+	} else {
 		FILE *fp;
 		fp = fopen(filename, "rb");
 		if (!fp)
-			return -1;
+			return 1;
 		*p1 = newSWFVideoStream_fromFile(fp);
 	}
 	if (!mhsp_stream)
@@ -1672,10 +1672,10 @@ EXPORT BOOL WINAPI c_addChars(void *p1, char *string, int p3, int p4)
 
 EXPORT BOOL WINAPI c_addUTF8Chars(void *p1, char *string, int p3, int p4)
 {
-	char *out;
+	unsigned char *out;
 	lstrcpy(funcname, "c_addUTF8Chars");
 	out = toutf8(string);
-	SWFFontCharacter_addUTF8Chars(mhsp_character, out);
+	SWFFontCharacter_addUTF8Chars(mhsp_character, (char *)out);
 	free(out);
 	return 0;
 }
@@ -1686,7 +1686,7 @@ EXPORT BOOL WINAPI mhsp_SWFSound(SWFSound *p1, char *file, byte flags, int p4)
 {
 	FILE *fp = fopen(file, "rb");
 	if (!fp)
-		return -1;
+		return 1;
 	lstrcpy(funcname, "SWFSound");
 	*p1 = newSWFSound(fp, flags);
 	return 0;
@@ -1694,13 +1694,13 @@ EXPORT BOOL WINAPI mhsp_SWFSound(SWFSound *p1, char *file, byte flags, int p4)
 
 EXPORT BOOL WINAPI mhsp_SWFSound_buf(HSPEXINFO *hei, int p2, int p3, int p4)
 {
-	char *buf;
+	unsigned char *buf;
 	int size;
 	byte flags;
 	SWFSound *p1;
 	lstrcpy(funcname, "SWFSound_buf");
 	p1 = (SWFSound *)hei->HspFunc_prm_getv();
-	buf = (char *)hei->HspFunc_prm_getv();
+	buf = (unsigned char *)hei->HspFunc_prm_getv();
 	size = hei->HspFunc_prm_geti();
 	flags = (byte)hei->HspFunc_prm_getdi(0);
 	*p1 = (SWFSound)newSWFSound_fromInput(newSWFInput_allocedBuffer(buf, size), flags);
@@ -1734,6 +1734,15 @@ EXPORT BOOL WINAPI si_loopCount(int count, int p2, int p3, int p4)
 {
 	lstrcpy(funcname, "si_loopCount");
 	SWFSoundInstance_setLoopCount(mhsp_instance, count);
+	return 0;
+}
+
+/* SWFPrebuiltClip */
+
+EXPORT BOOL WINAPI mhsp_SWFPrebuiltClip(SWFPrebuiltClip *p1, const char *filename, int p3, int p4)
+{
+	lstrcpy(funcname, "SWFPrebuiltClip");
+	*p1 = newSWFPrebuiltClip_fromFile(filename);
 	return 0;
 }
 #endif
@@ -1909,17 +1918,21 @@ EXPORT BOOL WINAPI destroy_b(SWFButton button, int p2, int p3, int p4)
 }
 
 #ifndef JAMING
-/*
 EXPORT BOOL WINAPI destroy_v(SWFVideoStream stream, int p2, int p3, int p4)
 {
 	destroySWFVideoStream(stream);
 	return 0;
 }
-*/
 
 EXPORT BOOL WINAPI destroy_snd(SWFSound sound, int p2, int p3, int p4)
 {
 	destroySWFSound(sound);
+	return 0;
+}
+
+EXPORT BOOL WINAPI destroy_pc(SWFPrebuiltClip clip, int p2, int p3, int p4)
+{
+	destroySWFPrebuiltClip(clip);
 	return 0;
 }
 #endif
@@ -1984,12 +1997,9 @@ EXPORT BOOL WINAPI mhsp_getaswarn(void *p1, int p2, int p3, int p4)
 {
 	int len;
 	len = lstrlen(WarnString);
-	if (len >= p2)
-	{
+	if (len >= p2) {
 		return -len;
-	}
-	else
-	{
+	} else {
 		lstrcpyn(p1, WarnString, len);
 	}
 	return 0;
@@ -1999,12 +2009,9 @@ EXPORT BOOL WINAPI mhsp_getaserror(void *p1, int p2, int p3, int p4)
 {
 	int len;
 	len = lstrlen(ErrorString);
-	if (len >= p2)
-	{
+	if (len >= p2) {
 		return -len;
-	}
-	else
-	{
+	} else {
 		lstrcpyn(p1, ErrorString, len);
 	}
 	return 0;

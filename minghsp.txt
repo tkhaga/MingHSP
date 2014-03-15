@@ -1,4 +1,4 @@
-MingHSP ver.1.0 beta 9 (06/01/04)
+MingHSP ver.1.0 beta 10 (06/03/03)
 ※これはまだベータ版なので仕様は予告無く変更されることがあります
 
   作者
@@ -10,27 +10,40 @@ MingHSP ver.1.0 beta 9 (06/01/04)
 
   ＠概要
 
-    これはOpaque Industriesの開発したフリーのFlash出力ライブラリ、Ming 0.3 beta 1をTHAGAがHSPプラグイン化したものです。旧バージョンのMing 0.2aをgoto氏がサウンド対応やマルチバイト文字対応という改良をしたJaMingを使用したものも同梱しています。HSP 2.6以降専用です
+      これはOpaque Industriesの開発したLGPLライセンスのFlash出力ライブラリ、
+    Ming 0.3.0をTHAGAがHSPプラグイン化したものです。旧バージョンのMing 0.2aを
+    goto氏がサウンド対応やマルチバイト文字対応という改良をしたJaMingを使用したも
+    のも同梱しています。HSP 2.6以降専用です
+      THAGAによる独自の改造も施してあり、オリジナルと比較すると
+      ・無圧縮WAVファイルが使える
+      ・BMP画像ファイルが使える(Ming 0.3.0版のみ)
+    といった違いがあります
 
-    マニュアルはまだありません。とりあえずminghsp.hpi,minghsp.as,mingtest.asをHSPのフォルダに入れてmingtest.asを実行してください。test.swfというファイルが出力されます。これはJaMingの公式サイトにあるblink.swfと同じものです
+      マニュアルはまだありません。とりあえずminghsp.hpi,minghsp.as,mingtest.asを
+    HSPのフォルダに入れてmingtest.asを実行してください。test.swfというファイルが
+    出力されます。これはJaMingの公式サイトにあるblink.swfと同じものです
 
-    Mingのソースコードはhttp://ming.sourceforge.net/で手に入れることが出来ます
+      Mingのソースコードはhttp://ming.sourceforge.net/で手に入れることが出来ます
 
-    JaMingのソースコードはhttp://humming.dip.jp/ming/のgoto氏のホームページで手に入れることが出来ます
+      JaMingのソースコードはhttp://humming.dip.jp/ming/のgoto氏のホームページで
+    入手出来ます
 
   ＠使用方法
 
-    minghsp.asをcommonディレクトリにコピーし、minghsp.hpiを読みこみ可能な場所においてスクリプトの先頭に
+      minghsp.asをcommonディレクトリにコピーし、minghsp.hpiを読みこみ可能な場所
+    にコピーしてスクリプトの先頭に
 	#include "minghsp.as"
     と書いてください。他に必要なスクリプトやプラグインはありません
     HSP3ではminghsp.asの代わりにminghsp3.asを使ってください
 
-    まだマニュアルなどが出来ておらず、現在はMingを使ったことがあって、どの命令がMingのどの命令に対応しているかが分かる人だけが使ってくださいという状態です。ご了承下さい。
+      まだマニュアルなどが出来ておらず、現在はMingを使ったことがあって、どの命令
+    がMingのどの命令に対応しているかが分かる人だけが使ってくださいという状態です
+    ご了承下さい。
 
   ＠アーカイブ構成
 
     source\ming\jaming-0.1.5フォルダ以下はJaMing-0.1.5に対する差分です
-    source\ming\ming-0.3beta1フォルダ以下はMing 0.3 beta 1に対する差分です
+    source\ming\ming-0.3.0フォルダ以下はMing 0.3.0に対する差分です
 
     minghsp.hpi          (プラグイン本体)
     minghsp.as           (プラグインを利用するためのヘッダ)
@@ -48,14 +61,17 @@ MingHSP ver.1.0 beta 9 (06/01/04)
     manual.txt           (各命令のリファレンス。未完成)
     swfpreview.txt       (swfpreviewのマニュアル)
     mingdc.txt           (mingdc.dllのマニュアル)
+    kl-01.txt            (川合堂ライセンス)
+    lgpl.txt             (LGPLライセンス)
     ttf2fft.exe          (TrueTypeフォントファイルをFFT形式に変換するソフト)
-    makefdb.exe          (FFT形式フォントファイルをMingで利用できるFDB形式に変換するMing付属ツール)
-    bmp2dbl.exe          (BMP形式画像ファイルをMingで読み込めるDBL形式に変換するツール)
-    wav2adpcm.exe        (非圧縮WAVファイルをADPCMに変換するツール)
-    png2dbl.exe          (PNG形式画像ファイルをMingで読み込めるDBL形式に変換するMing付属ツール)
-    gif2dbl.exe          (GIF形式画像ファイルをMingで読み込めるDBL形式に変換するMing付属ツール)
+    makefdb.exe          (FFT形式フォントファイルをMingで利用できるFDB形式に変換
+                          するMing付属ツール)
+    bmp2dbl.exe          (BMP/GIF/PNG形式画像ファイルをMingで読み込めるDBL形式に
+                          変換するツール)
+    wav2adpcm.exe        (無圧縮WAVファイルをADPCMに変換するツール)
     sample               (MingHSPを使用したサンプル)
-    └mingtest.as        (四角形が点滅しながら回転する。goto氏のblink.phpのMingHSP版)
+    └mingtest.as        (四角形が点滅しながら回転する。goto氏のblink.phpの
+                          MingHSP版)
       mingtest3.hsp      (上のHSP 3.0対応版)
       tutorial1.as       (manual.txtのチュートリアル用スクリプト)
       tutorial1.hsp      (上のHSP 3.0対応版)
@@ -64,13 +80,15 @@ MingHSP ver.1.0 beta 9 (06/01/04)
       shape.as           (曲線と直線から成る図形)
       action.as          (アクションスクリプトを用いたアニメーション)
       glyph.as           (フォントグリフを描画する)
-      gradientxform.as   (グラデーションとモーフィング。以上四つはMingの公式サンプルのMingHSP版)
+      gradientxform.as   (グラデーションとモーフィング。以上四つはMingの公式サン
+                          プルのMingHSP版)
       mine               (mine氏提供のサンプルを収録しています)
       └Ex_synchro.as    (MP3音声に合わせて歌詞を表示する)
         Ex_Mp3.as        (MP3音声の再生)
         Ex_Mp3_shape.as  (MP3音声と図形)
         Ex01_shape.as    (図形)
-        Ex02_txt.as      (2バイト文字。ipag.fdbというファイル名の日本語フォントを用意してください)
+        Ex02_txt.as      (日本語の表示。ipag.fdbというファイル名の日本語フォント
+                          を用意してください)
         streaming.as
         sample.mp3       (このフォルダ内のサンプルで使われるMP3ファイル)
     source
@@ -84,7 +102,7 @@ MingHSP ver.1.0 beta 9 (06/01/04)
             └
             (上書き)
               sound.c
-        ming-0.3beta1
+        ming-0.3.0
         └src
           └
           (上書き)
@@ -95,21 +113,29 @@ MingHSP ver.1.0 beta 9 (06/01/04)
               Makefile
               compileaction.c
             blocks
-            └
+            └bmpdbl.c
             (上書き)
+              bitmap.c
+              jpeg.c
               sound.c
       libungif
       └dgif_lib.c         (libungif 4.1.4に対する差分)
         egif_lib.c
       minghsp
-      └minghsp.c
-        loadaction.c
-        toutf8.c
+      └minghsp.c          (MingHSP本体)
+        loadaction.c       (SWFAction_save, SWFAction_load)
+        toutf8.c           (Windowsの機能を利用したSJIS->UTF-8変換)
         toutf8.h
-        formats.c
+        formats.c          (フォーマット判定。Mingのコードを使用)
+        formats.h
         hspdll.h
+        minghsp.rc         (リソーススクリプト)
       mhsputil
       └bmp2dbl.c          (bmp2dbl.exeのソース)
+        bmp2dbl.h
+        readbmp.c
+        readgif.c
+        readpng.c          (ここまで)
         bmp2dbl.bat
         mhsputil.c         (共通で利用されるコード)
         mhsputil.h
@@ -122,24 +148,29 @@ MingHSP ver.1.0 beta 9 (06/01/04)
         hspdll.h
         wav2adpcm.c        (wav2adpcm.exeのソース)
         wav2adpcm.bat
-        png2dbl.bat
-        gif2dbl.bat
-      (上書き)
-        png2dbl.c          (MingのCVSから取って来たやつ)
-        gif2dbl.c
 
   ＠注意
 
-    ・現在のところプログレッシブJPEGを読み込むことが出来ない(Flashの仕様のようです)
-    ・読み込めるWAVEファイルは無圧縮のもののみ
-    ・PHP版におけるSWFShapeのaddFillメソッドはs_addSolidFill,s_addBitmapFill,s_addGradientFillに対応しています
-    ・現状ではエラーが起こるとプログラムごと終了します。特にアクションスクリプトを自由に記述させるような形式は避けた方がいいです(Ming 0.3 beta 1版ではアクションスクリプトのエラーでは終了しなくなりました)
-    ・量子化ビットが8bitのADPCMファイルは読み込むとエラーが出ます。WAVE形式であれば問題ありません
+    ・現在のところプログレッシブJPEGを読み込むことが出来ない(Flashの仕様のようで
+      す)
+    ・読み込めるWAVファイルは無圧縮のもののみ
+    ・PHP版におけるSWFShapeのaddFillメソッドはs_addSolidFill,s_addBitmapFill,
+      s_addGradientFillに対応しています
+    ・現状ではエラーが起こるとプログラムごと終了します。特にアクションスクリプト
+      を自由に記述させるような形式は避けた方がいいです(Ming 0.3.0版ではアクショ
+      ンスクリプトのエラーでは終了しなくなりました)
+    ・量子化ビットが8bitのADPCMファイルは読み込むとエラーが出ます。WAV形式であれ
+      ば問題ありません
 
   ＠IPAフォントについて
 
-    IPAフォントとは、独立行政法人情報処理推進機構(IPA)が無償使用可能な日本語フォントの公募を行って採択された高品質なTrueTypeフォントです。これをMingHSPで利用できるFDB形式に変換したものを公開しています。ライセンスの関係で「共通のオープンプリンティングシステムの開発」の成果物と同梱するという形になっています。
-    フォントは、openprinting-jp-0.1.3\ipafontディレクトリに入っており、それぞれのファイルは
+      IPAフォントとは、独立行政法人情報処理推進機構(IPA)が無償使用可能な日本語フ
+    ォントの公募を行って採択された高品質なTrueTypeフォントです。これをMingHSPで
+    利用できるFDB形式に変換したものを公開しています。ライセンスの関係で「共通の
+    オープンプリンティングシステムの開発」の成果物と同梱するという形になっていま
+    す。
+      フォントは、openprinting-jp-0.1.3\ipafontディレクトリに入っており、それぞ
+    れのファイルは
       ipag.fdb  ->ゴシック体 IPAフォント
       ipagp.fdb ->ゴシック体プロポーショナル IPAフォント
       ipagui.fdb->ゴシック体UI IPAフォント
@@ -154,60 +185,74 @@ MingHSP ver.1.0 beta 9 (06/01/04)
 
     ・mingdc
 
-      mingdcは画像、音声をMingHSPで扱える形式に変換するためのHSP 2.6以降専用のプラグインです。詳しくはmingdc.txtを参照してください。
+        mingdcは画像、音声をMingHSPで扱える形式に変換するためのHSP 2.6以降専用の
+      プラグインです。詳しくはmingdc.txtを参照してください。
 
     ・swfpreview
 
-      swfpreviewはHSPのウィンドウでSWFを見ることが出来るようにするモジュールです。詳しくはswfpreview.txtを参照して下さい
+        swfpreviewはHSPのウィンドウでSWFを見ることが出来るようにするモジュールで
+      す。詳しくはswfpreview.txtを参照して下さい
 
     ・wav2adpcm.exe
-      wav2adpcm.exeはJaMing-0.1.5に含まれているraw2adpcm.cをRIFF/WAVEファイル(データ部が無圧縮PCM)に対応させたものです
+        wav2adpcm.exeはJaMing-0.1.5に含まれているraw2adpcm.cをRIFF/WAVEファイル
+      (データ部が無圧縮PCM)に対応させたものです
 
         wav2adpcm.exe in.wav [out] [16bit] [stereo]
 
       in.wav - 入力ファイル名です
-      out - は出力ファイル名です。省略時は入力ファイル名の拡張子を.adpcmにしたものになります
-      16bit - これが1 だと入力ファイルの量子化ビット数を16とし、0だと8ビットとします。省略時は1となります。入力ファイルがRIFF/WAVEファイルの場合、無視され、ヘッダに書かれている値が採用されます
-      stereo - これが1だと入力ファイルのチャンネル数を2とし、0だと1とします。省略時は1となります。入力ファイルがRIFF/WAVEファイルの場合、無視され、ヘッダに書かれている値が採用されます
-
-    ・png2dbl.exe/gif2dbl.exe
-      png2dbl.exe/gif2dbl.exeはPNG/GIFをMingで読み込めるDBL形式に変換するMing付属ツールです
-
-        png2dbl.exe in.png
-
-      in.png - 入力PNGファイル名。出力ファイル名はin.dblになる
-    gif2dbl.exeも同様です
+      out - は出力ファイル名です。省略時は入力ファイル名の拡張子を.adpcmにしたも
+        のになります
+      16bit - これが1 だと入力ファイルの量子化ビット数を16とし、0だと8ビットとし
+        ます。省略時は1となります。入力ファイルがRIFF/WAVEファイルの場合、無視さ
+        れ、ヘッダに書かれている値が採用されます
+      stereo - これが1だと入力ファイルのチャンネル数を2とし、0だと1とします。省
+        略時は1となります。入力ファイルがRIFF/WAVEファイルの場合、無視され、ヘッ
+        ダに書かれている値が採用されます
 
     ・bmp2dbl.exe
-      bmp2dbl.exeはBMPをMingで読み込めるDBL形式に変換するツールです
+      bmp2dbl.exeはBMP/GIF/PNGをMingで読み込めるDBL形式に変換するツールです
 
         bmp2dbl.exe in [out] [-t alpha] [-#]
 
-      in - 入力BMPファイル名
-      out - 出力ファイル名。省略時は入力ファイル名の拡張子を.dblにしたものになる
-      alpha - 透明度。0で完全に透明、255で完全に不透明
-      # - 圧縮率を表す1から9までの数字。数字が大きいほど圧縮率が高い
+      in    - 入力ファイル名
+      out   - 出力ファイル名。省略時は入力ファイル名の拡張子を.dblにしたものにな
+              る
+      alpha - 透明度。0で完全に透明、255で完全に不透明(BMPファイルのみ)
+      #     - 圧縮率を表す1から9までの数字。数字が大きいほど圧縮率が高い
 
-      1, 4, 8bitパレット、24bitフルカラーのみに対応しています
+      BMPファイルは1, 4, 8bitパレット、24bitフルカラーのもののみに対応しています
       OS/2ビットマップやV4、V5ヘッダも多分大丈夫なはずです
       トップダウン形式にも対応しています
+      GIF/PNGについては読めないものは無いはずです
 
     ・ifdbl.spi
 
-      Susieプラグイン対応アプリケーションでpng2dbl.exe, gif2dbl.exe, bmp2dbl.exeで作成されるDBL形式画像ファイルを見られるようにするSusieプラグインです。
-      Susieについては作者の竹村嘉人氏のホームページ(http://www.digitalpad.co.jp/~takechin/)を参照してください。使用するにはSusieをインストールしたフォルダにこのファイルをコピーしてください。
+        Susieプラグイン対応アプリケーションでpng2dbl.exe, gif2dbl.exe, 
+      bmp2dbl.exeで作成されるDBL形式画像ファイルを見られるようにするSusieプラグ
+      インです。
+        Susieについては作者の竹村嘉人氏のホームページ
+      (http://www.digitalpad.co.jp/~takechin/)を参照してください。使用するには
+      Susieをインストールしたフォルダにこのファイルをコピーしてください。Susie
+      以外の対応ソフトではLeeyes、ViX、マンガミーヤ、EDGE、疾風 -Tokikaze-、
+      Hamanaでの動作を確認しています。
 
     フォント関連のツールに付いては、下の項で解説しています
 
   ＠任意のTTFフォントをMingで利用する手引き(簡略版)
 
-    TTFフォントをMingで利用するためには、TTFフォントをFFT形式に変換し、更にこれをMing専用の形式であるfdb形式に変換する必要があります。また利用するフォントがTTCに含まれている場合、最初にこれをTTFに分解する必要があります。ここではWindowsに標準でインストールされているMS Gothicを例にとって手順を説明します(ライセンスの問題があるのでここで得られたfdbファイルは使用しないで下さい)
+      TTFフォントをMingで利用するためには、TTFフォントをFFT形式に変換し、更にこ
+    れをMing専用の形式であるfdb形式に変換する必要があります。また利用するフォン
+    トがTTCに含まれている場合、最初にこれをTTFに分解する必要があります。ここで
+    はWindowsに標準でインストールされているMS Gothicを例にとって手順を説明します
+    (ライセンスの問題があるのでここで得られたfdbファイルは使用しないで下さい)
 
-    MS GothicはWindowsディレクトリ下のfontsディレクトリにあるmsgothic.ttc中に含まれているのでまずはこれをTTFに分解する必要があります
+      MS GothicはWindowsディレクトリ下のfontsディレクトリにあるmsgothic.ttc中に
+    含まれているのでまずはこれをTTFに分解する必要があります
     これを行うためには
       http://www.xlsoft.com/jp/products/indigorose/files/ttsdk.zip
     をダウンロードして、展開した中に含まれているBREAKTTC.EXEが必要です
-BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力します
+    BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力し
+    ます
 
     breakttc %windir%\fonts\msgothic.ttc
 
@@ -233,7 +278,8 @@ BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力します
      0: platform: Macintosh, encoding: Roman
      1: platform: Microsoft, encoding: Unicode
 
-    と表示されます。このメッセージにより日本語を利用するためにはキャラクターマップ 1を変換すればいいことが分かります。よって
+    と表示されます。このメッセージにより日本語を利用するためにはキャラクターマッ
+    プ 1を変換すればいいことが分かります。よって
 
     ttf2fft -e 1 font00.ttf
 
@@ -241,14 +287,19 @@ BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力します
 
     makefdb MSGGothic.fft
 
-    と入力することによってMingで使用できるフォントファイル、MS Gothic.fdbが得られます
+    と入力することによってMingで使用できるフォントファイル、MS Gothic.fdbが得ら
+    れます
 
   ＠命令一覧
 
-    minghsp.hpi  (Ming 0.3 beta 1ベース) 命令総数:198
+    minghsp.hpi  (Ming 0.3.0ベース)      命令総数:203
     minghspj.hpi (Jaming-0.1.5ベース)    命令総数:158
-    Ming 0.3 beta 1版にのみある命令には*, Ming 0.3 beta 1版で仕様が違う命令には+, Ming 0.3 beta 1版で挙動が変わっている(把握している範囲で)命令には!が付いています。
-    Ming 0.3 beta 1版では削除されている命令は()でくくられています
+
+    (凡例)
+    Ming 0.3.0版にのみある命令           *
+    Ming 0.3.0版で仕様が違う命令         +
+    Ming 0.3.0版で挙動が変わっている命令 !
+    Ming 0.3.0版では削除されている命令は()でくくられています
 
         sel_s
         sel_m
@@ -279,6 +330,8 @@ BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力します
         destroy_a
         destroy_b
         destroy_snd *
+        destroy_v *
+        destroy_pc *
         mhsp_float
         mhsp_add
         mhsp_sub
@@ -293,6 +346,7 @@ BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力します
         Ming_setCubicThreshold
         Ming_setScale
         Ming_useSWFVersion !
+        Ming_setSWFCompression
         SWFBUTTON_KEYPRESS
         Ming_useConstants *
         SWFMovie
@@ -308,17 +362,18 @@ BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力します
         m_setFrames
         m_streamMp3 +
         m_streamMp3_buf	+
-        ( m_addSound )
-        ( m_addSound_buf )
+      ( m_addSound )
+      ( m_addSound_buf )
         m_startSound +
         m_stopSound +
-        ( m_setButtonSound )
+      ( m_setButtonSound )
         m_importChar *
         m_addFont *
         m_importFont *
         m_addExport *
         m_writeExports *
         m_Protect *
+        m_namedAnchor *
         SWFShape
         s_setLine
         s_addSolidFill
@@ -397,7 +452,7 @@ BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力します
         t_getUTF8Width *
         SWFFont
         fnt_getWidth
-        ( fnt_setFlags )
+      ( fnt_setFlags )
         fnt_getAscent
         fnt_getDescent
         fnt_getLeading
@@ -426,8 +481,8 @@ BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力します
         mc_nextFrame
         mc_labelFrame
         mc_setFrames
-        ( mc_addSound )
-        ( mc_addSound_buf )
+      ( mc_addSound )
+      ( mc_addSound_buf )
         mc_startSound +
         mc_stopSound +
         SWFButton
@@ -454,22 +509,28 @@ BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力します
         si_loopInPoint *
         si_loopOutPoint *
         si_loopCount *
+        SWFPrebuiltClip *
 
-  mingdc.dll命令総数:3
+  mingdc.dll命令総数:4
 
         vram2dbl
         wav2adpcm
         getwavinfo
+        bmp2dbl
 
-＠ビルドについて
+  ＠ビルドについて
 
-  ・共通の準備
+    ・共通の準備
 
-    1.MinGW, MSYSのインストール
-        http://www.mingw.org/からMinGW,MSYSの最新安定版をダウンロードし、MinGWを最初にインストール。次にMSYSをインストールするが、途中でMinGWのインストール先を聞いてくるので先ほどMinGWをインストールしたパスを入力する
+      1.MinGW, MSYSのインストール
+        http://www.mingw.org/からMinGW,MSYSの最新安定版をダウンロードし、MinGWを
+      最初にインストール。次にMSYSをインストールするが、途中でMinGWのインストー
+      ル先を聞いてくるので先ほどMinGWをインストールしたパスを入力する
 
-    2.MSYSの環境設定
-      MinGWのインストールフォルダがd:\MinGW、MSYSのインストールフォルダがd:\msysの場合、d:\msys\etc\fstabの内容を次のように変更しておくこと(違うフォルダにインストールした場合適宜読みかえること)
+      2.MSYSの環境設定
+        MinGWのインストールフォルダがd:\MinGW、MSYSのインストールフォルダが
+      d:\msysの場合、d:\msys\etc\fstabの内容を次のように変更しておくこと(違うフ
+      ォルダにインストールした場合適宜読みかえること)
 
 d:/mingw /mingw
 d:/mingw /usr/local
@@ -477,70 +538,113 @@ d:/mingw/man /usr/local/share/man
 d:/mingw/lib /usr/lib
 d:/mingw/include /usr/include
 
-    3.必要なライブラリのインストール
+      3.必要なライブラリのインストール
 
       MingHSPおよび周辺ツールが使用するライブラリは
         zlib     (http://www.zlib.net/)
         libungif (http://sourceforge.net/projects/libungif)
         libpng   (http://www.libpng.org/pub/png/libpng.html)
-      の三つです。それぞれをダウンロードして(libpngはconfig版をダウンロードしてください)適当なディレクトリに展開します。
-      libungifはそのままだとWindowsで正常に動作しないので、MingHSPの配布ファイル中のsource\libungifフォルダにあるファイルを上書きします(4.1.4用)
+      の三つです。それぞれをダウンロードして(libpngはconfig版をダウンロードして
+      ください)適当なディレクトリに展開します。
+      libungifはそのままだとWindowsで正常に動作しないので、MingHSPの配布ファイル
+      中のsource\libungifフォルダにあるファイルを上書きします(4.1.4用)
       あとはMSYS上でそれぞれのディレクトリに移動し、
         ./configure
         make
         make install
       を順番に実行します。これでインストールは完了です
 
-  ・minghsp.hpi
+    ・minghsp.hpi
 
-    1.ソースのダウンロード
-      http://ming.sourceforge.net/からMing 0.3 beta 1をダウンロードし、適当なフォルダに展開。Mingのディレクトリに、MingHSPの配布ファイル中のsource\ming\ming-0.3beta1以下を上書き
-      Coa氏のホームページ(http://www.geocities.jp/coa9999/)からaclibのソースをダウンロードし、sourceフォルダのファイルをMingのsrc\actioncompilerに上書き、libming.c, libming.h,  ming.hを削除
-      JaMing版の場合はhttp://humming.dip.jp/からjaming-0.1.5をダウンロード。適当なフォルダに展開し、MingHSPの配布ファイルのsource\ming\jaming-0.1.5以下をjaming-0.1.5のディレクトリに上書き
+      1.ソースのダウンロード
+        http://ming.sourceforge.net/からMing 0.3.0をダウンロードし、適当なフォル
+      ダに展開。Mingのディレクトリに、MingHSPの配布ファイル中の
+      source\ming\ming-0.3.0以下を上書き
+        Coa氏のホームページ(http://www.geocities.jp/coa9999/)からaclibのソースを
+      ダウンロードし、sourceフォルダのファイルをMingのsrc\actioncompilerに上書き
+      (元々のファイルはコピーしておくといい)libming.c, libming.h,  ming.h, 
+      blocksディレクトリを削除
+        JaMing版の場合はhttp://humming.dip.jp/からjaming-0.1.5をダウンロード。適
+      当なフォルダに展開し、MingHSPの配布ファイルのsource\ming\jaming-0.1.5以下
+      をjaming-0.1.5のディレクトリに上書き
 
-    2.bisonとflexのインストール
-      jaming-0.1.5版をビルドする場合にはbisonとflexをパスの通ったところか、jaming-0.1.5のsrc\actioncompilerディレクトリに入れる必要があります。bisonは1.35を使ってください。http://hp.vector.co.jp/authors/VA029962/bison_flex_gnuwin32.zipをダウンロードして、展開した中身を全部jaming-0.1.5のsrc\actioncompilerディレクトリに入れるのが一番楽です。
+      2.bisonとflexのインストール
+        jaming-0.1.5版をビルドする場合にはbisonとflexをパスの通ったところか、
+      jaming-0.1.5のsrc\actioncompilerディレクトリに入れる必要があります。
+      bisonは1.35を使ってください。
+      http://hp.vector.co.jp/authors/VA029962/bison_flex_gnuwin32.zipをダウンロ
+      ードして、展開した中身を全部jaming-0.1.5のsrc\actioncompilerディレクトリに
+      入れるのが一番楽です。
 
-    3.MSYSからコンパイル
-      MingHSPの配布ファイル中のsource\minghspフォルダの中身をMingのsrcディレクトリにコピーし、MSYSでこのディレクトリに移動しmakeを実行する。これでminghsp.hpiが得られる(JaMing版はminghspj.hpi)
+      3.MSYSからコンパイル
+        Ming 0.3.0版ではまずMSYS上でMingのディレクトリに移動し、
+        ./configure
+      を実行します。
+        作成されるMakefile.configを開いて40行目のEXTRA_OBJS = の右を
+      pngdbl.o gifdbl.o bmpdbl.oにしてください。
+        次にsrcディレクトリのming_config.hを開いて3-5行目が
+        #define USE_ZLIB 1
+        #define USE_GIF 1
+        #define USE_PNG 1
+      になっているかを確認して、なっていなければ書き換えてください。
 
-  ・mingdc.dll,bmp2dbl.exe,png2dbl.exe,gif2dbl.exe,wav2adpcm.exe
+        MingHSPの配布ファイル中のsource\minghspフォルダの中身をMingのsrcディレク
+      トリにコピーし、MSYSでこのディレクトリに移動しmakeを実行する。これで
+      minghsp.hpiが得られる(JaMing版はminghspj.hpi)
 
-    MingHSPの配布ファイル中のsource\mhsputilの中身をMingのutilディレクトリにコピー(JaMing版は不可)。それぞれのプログラムの名前を冠したバッチファイルを実行
+    ・mingdc.dll,bmp2dbl.exe,png2dbl.exe,gif2dbl.exe,wav2adpcm.exe
+
+        MingHSPの配布ファイル中のsource\mhsputilの中身をMingのutilディレクトリに
+      コピー(JaMing版は不可)。それぞれのプログラムの名前を冠したバッチファイルを
+      実行
 
   ＠ToDo
 
     上にあるほど優先度が高いです
 
-    ・直接BMPファイルを使えるようにする
+    ・ParaFla!のPDR形式に対応
     ・RLE, ビットフィールドBMPに対応
-    ・bmp2dbl, png2dbl, gif2dblの統合
-    ・そしてそれをmingdc.dllに加える
+    ・mingdcの処理を別スレッドで行うようにする
     ・マニュアル作成
     ・拡張ランタイムの作成
     ・SWFtoHSPを作る?
 
   ＠謝辞
+
     sample\mine\フォルダのサンプルは、mine氏が提供してくださったものです
-    またmine氏にはバグを報告していただきました。本当にありがとうございます
+    またmine氏には幾つかバグを報告していただきました。本当にありがとうございます
 
   ＠ライセンス等
 
-    0.平たく言うとminghsp.hpi, minghspj.hpiの使用および再配布は自由に行えます。
-      minghsp.hpi, minghspj.hpiはLGPL verion 2.1のMingライブラリを使用していますが、これら自体はLGPL version 2.1の第6節における"work that uses the Library"なのでLGPL version 2.1の適用外となります。
-      これらのライセンスについては第3節を参照してください(LGPL version 2.1より緩いライセンスです)。
+    0.minghsp.hpi, minghspj.hpiはLGPL verion 2.1のMingライブラリを使用しています
+      が、これら自体はLGPL version 2.1の第6節における"work that uses the 
+      Library"なのでLGPL version 2.1の適用外となります。ただし、minghsp.hpi, 
+      minghspj.hpiを使用したプログラムをこれらと一緒に配布する場合は、lgpl.txtを
+      配布ファイルに同梱してください。これはLGPL version 2.1の要請によります。
 
-    1.このアーカイブを完全に同一状態で再配布することには何の制限もありません。ただし個別のファイルについてライセンスが異なるので注意してください。
+    1.このアーカイブを完全に同一状態で再配布することには何の制限もありません。た
+      だし個別のファイルについてライセンスが異なるので注意してください。
       次節以降に各ファイルのライセンスを示します。
 
-    2.source\ming以下の全ファイルおよびsource\minghsp\formats.c、mingdc.dll, wav2adpcm.exe, gif2dbl.exe, png2dbl.exe, makefdb.exeおよびそのソースはLGPL version 2.1です。再配布する場合はこれらのライセンスがLGPL version 2.1であることを明記し、LGPL version 2.1の複製(LICENCE.TXT)も必ず同梱するようにしてください。
-      プラグインとしての利用や実行ファイル呼び出しでの利用をしている限りではそのソフトはLGPL version 2.1は適用されません。しかしこれらを組み込んだソフトはLGPL version 2.1となります。詳しくは同封のLICENCE.TXT(英語)を参照してください。
+    2.source\ming以下の全ファイルおよびsource\minghsp\formats.c,
+      source\mhsputil\readgif.c, source\mhsputil\readpng.cとmingdc.dll, 
+      wav2adpcm.exe, makefdb.exeおよびそのソースはLGPL version 2.1です。再配布す
+      る場合はこれらのライセンスがLGPL version 2.1であることを明記し、
+      LGPL version 2.1の複製(lgpl.txt)も必ず同梱するようにしてください。
+      プラグインとしての利用や実行ファイル呼び出しでの利用をしている限りではその
+      プログラムにはLGPL version 2.1は適用されません。しかしこれらをソースレベル
+      で組み込んだプログラムはLGPL version 2.1となります。詳しくは同封のlgpl.txt
+      (英語)を参照してください。
       なおこの解釈は正しいと信じていますが法的に有効では無いので注意してください。
 
-    3.minghsp.hpi, minghspj.hpiおよびこれらのMing部分以外のソース(minghsp.c, loadaction.c, toutf8.c, toutf8.h)とbmp2dbl.exe, ifdbl.spiおよびそのソースは「川合堂ライセンス-01」とします。詳しくは同封のKL-01.txtを参照してください。
+    3.minghsp.hpi, minghspj.hpiおよびこれらのMing部分以外のソース(minghsp.c, 
+      loadaction.c, toutf8.c, toutf8.h)とbmp2dbl.exeおよびそのソースのうち
+      bmp2dbl.c, bmp2dbl.h, readbmp.cとifdbl.spiおよびそのソースは「川合堂ライセ
+      ンス-01」とします。詳しくは同封のkl-01.txtを参照してください。
       なお、再配布の際にライセンス文の複製を一緒に配布する必要はありません。
 
-    4.ttf2fft.exeは次のライセンスに基づいて再配布されています。以下に全文を引用します。再配布する場合はこのライセンスも必ず同梱するようにしてください。
+    4.ttf2fft.exeは次のライセンスに基づいて再配布されています。以下に全文を引用
+      します。再配布する場合はこのライセンスも必ず同梱するようにしてください。
 
 //引用ここから
 

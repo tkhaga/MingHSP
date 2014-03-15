@@ -22,7 +22,8 @@ all: minghsp
 
 minghsp: ${OFILES} ${MHSP}
 	cd .. && make static
-	dllwrap --def minghsp.def -s -o minghspj.hpi ${MHSP} libming.a
+	windres minghsp.rc -o minghsp.coff
+	dllwrap --def minghsp.def -s -mwindows -o minghspj.hpi ${MHSP} minghsp.coff libming.a
 
 dynamic: ${OFILES}
 	cd blocks && make

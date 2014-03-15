@@ -1,0 +1,1 @@
+gcc -s makefdb.c read.c -o makefdb.exe -Os -I../src -L.. -lming
