@@ -16,11 +16,13 @@ unsigned char *toutf8(const char *src)
 	utf8size = lstrlen(src);
 	numchars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, src, utf8size, NULL, 0);
 
-	if (!numchars)
+	if (!numchars) {
 		return NULL;
+	}
 
-	if (!(wstr = calloc(numchars + 1, 2)))
+	if (!(wstr = calloc(numchars + 1, sizeof(wchar_t)))) {
 		return NULL;
+	}
 
 	if (numchars != MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, src, utf8size, wstr, numchars)) {
 		free(wstr);
@@ -28,7 +30,7 @@ unsigned char *toutf8(const char *src)
 	}
 
 	pp = wstr;
-	while (*pp) {
+	while (*pp != '\0') {
 		if (*pp >= 0x0800) {
 			utf8size += 3;
 		}
@@ -38,15 +40,16 @@ unsigned char *toutf8(const char *src)
 		else {
 			utf8size += 1;
 		}
-		*pp++;
+		pp++;
 	}
 
-	if (!(utf8str = calloc(utf8size + 1, 1)))
+	if (!(utf8str = malloc(utf8size + 1))) {
 		return NULL;
+	}
 
 	pp = wstr;
 	p = utf8str;
-	while (*pp) {
+	while (*pp != '\0') {
 		if (*pp >= 0x0800) {
 			*p++ = 0xe0 | (*pp >> 12);
 			*p++ = 0x80 | ((*pp >> 6) & 0x3f);
@@ -59,7 +62,7 @@ unsigned char *toutf8(const char *src)
 		else {
 			*p++ = *pp & 0xff;
 		}
-		*pp++;
+		pp++;
 	}
 
 	free(wstr);

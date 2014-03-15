@@ -27,7 +27,7 @@
 #include "input.h"
 #include "libming.h"
 
-#if 1
+#if USE_BMP
 SWFDBLBitmapData newSWFDBLBitmapData_fromBmpInput(SWFInput input);
 #endif
 
@@ -82,7 +82,7 @@ SWFBitmap newSWFBitmap_fromInput(SWFInput input)
 #endif
 
 	if(c1 == 'B' && c2 == 'M')
-#if 1
+#if USE_BMP
 		return (SWFBitmap) newSWFDBLBitmapData_fromBmpInput(input);
 #else
 		SWF_error("BMP images must be translated into DBL files for now");
