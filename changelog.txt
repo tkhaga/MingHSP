@@ -1,3 +1,43 @@
+ver.1.0 beta10 (06/03/03)
+
+  --全体--
+    ・ライセンス関係に不備があったのでまた整理し直しました
+    ・コンパイラをgcc-4.0.2に変更
+    ・型チェックの厳しいコンパイラで警告が出ないようにした
+
+  --MingHSP--
+    ・本体にバージョン情報を付加し、Mingを使用している旨を明記するようにした(LGPLの要請による)
+    ・MingをMing 0.3.0に差し替え(JaMing版はそのままです)。以下の命令を追加
+        Ming_setSWFCompression
+        m_namedAnchor
+        SWFPrebuiltClip
+        destroy_pc
+    ・destroy_v命令を追加(Ming 0.3.0版のみ)
+    ・939氏のJPEGパッチを適用(Ming 0.3.0版のみ)
+    ・aclibを20060210版に差し替え
+    ・SWFBitmap, SWFBitmap_buf命令でBMPファイルを読み込めるようになった(TODOの一つ)
+    ・ファイルを開けなかった場合はHSP側でシステムエラーになるようにした
+
+  --mingdc--
+    ・wav2adpcmの変更を取り込み
+    ・wav2adpcmのメモリーリークを修正
+    ・bmp2dbl命令を追加(TODOの一つ)
+
+  --wav2adpcm--
+    ・Ming 0.3.0でコンパイルできるように変更
+    ・処理データを逐次読み込むようにしてメモリ使用量を減らした
+
+  --ifdbl--
+    ・プラグイン情報の瑣末な変更
+    ・使用する変数を減らした
+
+  --bmp2dbl--
+    ・gif2dbl.exe, png2dbl.exeを統合。ライセンスはLGPLに(TODOの一つ)
+
+  --その他--
+    ・makefdbを2005/09/13版に更新
+    ・gif2dbl.exe, png2dbl.exeを削除
+
 ver.1.0 beta 9 (06/01/04)
 
   --全体--

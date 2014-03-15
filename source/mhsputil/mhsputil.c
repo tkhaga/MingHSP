@@ -7,37 +7,20 @@
 #define isDirDelimiter(p) ((*p == '\\' && !((0x81 <= *(p - 1) && *(p - 1) <= 0x9f)\
  || (0xe0 <= *(p - 1) && *(p - 1) <= 0xf5))) || *p == '/')
 
-int GetNum(const char *p)
-{
-	int num = 0;
-	while(*p != '\0')
-	{
-		if (!('0' <= *p && *p <= '9'))
-		{
-			num = -1;
-			break;
-		}
-		num *= 10;
-		num += *p - '0';
-		p++;
-	}
-	return num;
-}
-
 /*
   Šg’£Žq‚Ì•ÏX
 */
-void ChangeExt(unsigned char *fname, const char *ext)
+void ChangeExt(char *fname, const char *ext)
 {
 	unsigned char *p, *pp;
-	pp = fname + strlen(fname);
+
+	pp = (unsigned char *)fname + strlen(fname);
 	p = pp - 1;
 
-	for(;;)
-	{
+	for(;;) {
 		if (*p == '.')
 			pp = p;
-		if (p == fname)
+		if (p == (unsigned char *)fname)
 			break;
 		if (isDirDelimiter(p))
 			break;
@@ -46,11 +29,29 @@ void ChangeExt(unsigned char *fname, const char *ext)
 
 	*pp = '\0';
 
-	if (ext)
-	{
+	if (ext) {
 		strcat(fname, ".");
 		strcat(fname, ext);
 	}
+}
+
+/*
+  ”Žš‚ð”’l‚É
+*/
+int GetNum(const char *p)
+{
+	int num = 0;
+
+	while(*p != '\0') {
+		if (!('0' <= *p && *p <= '9')) {
+			num = -1;
+			break;
+		}
+		num *= 10;
+		num += *p - '0';
+		p++;
+	}
+	return num;
 }
 
 unsigned char *data;

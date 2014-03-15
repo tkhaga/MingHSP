@@ -21,6 +21,8 @@
 
 #include "blocks/input.h"
 
+#include "formats.h"
+
 /* JPEG stream markers: */
 #define JPEG_MARKER 0xFF
 
@@ -154,6 +156,16 @@ int isGIF(SWFInput input)
 	SWFInput_seek(input, 0, SEEK_SET);
 
 	if (SWFInput_getChar(input) != 'G' || SWFInput_getChar(input) != 'I')
+		return 0;
+
+	return 1;
+}
+
+int isBMP(SWFInput input)
+{
+	SWFInput_seek(input, 0, SEEK_SET);
+
+	if (SWFInput_getChar(input) != 'B' || SWFInput_getChar(input) != 'M')
 		return 0;
 
 	return 1;

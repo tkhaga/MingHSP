@@ -250,36 +250,19 @@
 
       DBLファイルの"test.dbl"からSWFBitmapオブジェクトを作成し、変数bitmapに
     代入します。
+      そしたら、SWFShapeオブジェクトをムービーに追加した時と同様に、SWFMovie
+    オブジェクトを作成し、変数bitmapのSWFBitmapオブジェクトをm_add命令で追加
+    します
+
+	SWFMovie movie
+	sel_m movie
+	m_add i,bitmap
+
+      そうしたらチュートリアル２と同様に変数iに代入されたSWFDisplayItemを操
+    作してアニメーションさせることが出来ます。前回はただ移動するだけだったの
+    で、今回は回転させて見ましょう。
 
 ＠ActionScriptかいせつもどき（まだできていません、読み飛ばしてください）
-
-　ここではMingHSPで利用できるActionScriptを利用する上で最低限のことを解説できたらいいなと思っているのですが、なにせ私自体よく理解していないので
-
-MingHSPでActionScriptを利用するには、ActionScriptで制御したいオブジェクトをm_add、sp_add命令でSWFDisplayItemを取得してからi_setNameで名前を設定し、SWFAction命令を使ってActionScriptを記述します（具体的な手順はサンプルのaction.asがわかりやすいです）
-ActionScriptには「プロパティ」「メソッド」
-_x
-_y
-_xscale
-_yscale
-_currentframe
-_totalframes
-_alpha
-_visible
-_width
-_height
-_rotation
-_target
-_framesloaded
-_name
-_droptarget
-_url
-_quality
-_focusrect
-_soundbuftime
-
-prevFrame()
-前のフレームに戻ります。戻ったフレームのActionScriptは再び実行されます
-play()
 
 
 ＠命令リファレンス
@@ -289,7 +272,7 @@ float値について
 
 以下において、オブジェクトの種名に次の略称を用います（左が略称、右は正式名称）
 s	SWFShape
-直線、曲線、多角形、円、円弧などの各図形を扱うオブジェクトです
+直線、曲線、多角形、円、円弧などの図形を扱うオブジェクトです
 
 m	SWFMovie
 Flashムービーの縦横のサイズ、フレーム数、フレームレートやファイルの出力といったムービー全体に関する事柄を扱うオブジェクトです
@@ -328,104 +311,130 @@ a	SWFAction
 ActionScriptによるアクションを扱うオブジェクトです
 
 命令リファレンスでは引数(ひきすう)のところで次のような記号を用います
-v1,v2
+v1,v2,…
 変数
 
-s1
+s1,s2,…
 文字列。変数でも可
 
 n1,n2,…
 数値。変数でも可
 
 f1,f2,…
-浮動小数点数を表す変数(mhsp_floatの変換結果)。HSP 3.0ではmhsp_floatの変換結果は使えないが、整数は自動で変換される
+浮動小数点数を表す数値型変数(mhsp_floatの変換結果)。HSP 3.0ではmhsp_floatの変換結果は使えないが、整数は自動で変換される
 
 ここからリファレンス開始
 
-・sel_(各オブジェクトの略称) n1
+  ・sel_(各オブジェクトの略称) n1
 
-n1  オブジェクト
+    n1  オブジェクト
 
-それぞれ
-(各オブジェクトの略称)_
-から始まる命令で操作するオブジェクトを選択します。sel_a命令はありません
+    それぞれ
+    (各オブジェクトの略称)_
+    から始まる命令で操作するオブジェクトを選択します。
+    (例)
+      sel_s（s_setLine命令などで操作するSWFShapeオブジェクトを指定）
+
+  ・destroy_(各オブジェクトの略称) n1
+
+    n1  オブジェクト
+
+    各オブジェクトをメモリ上から削除し、使用不可能にします
+
+SWFMovieオブジェクト関連命令
+使用前には操作対象のSWFMovieオブジェクトをsel_m命令で指定します
+
 (例)
-sel_s（s_setLine命令などで操作するSWFShapeオブジェクトを指定）
-
-・destroy_(各オブジェクトの略称) n1
-
-n1  オブジェクト
-
-各オブジェクトをメモリ上から削除し、使用不可能にします
+sel_m movie
 
   ・SWFMovie v1
 
-新しいSWFMovieオブジェクトを作成しv1に代入します
+    新しいSWFMovieオブジェクトを作成しv1に代入します。作成した時点ではフレーム番号は0です
 
   ・m_save s1
 
-s1のファイル名でSWFを保存します。実行するとstatにはそのサイズが代入されます
+    s1  保存ファイル名
+    n3  圧縮率。範囲は-1～9で数値が大きいほど高圧縮(-1は非圧縮)。省略時は-1  (minghsp.hpiのみのパラメータ)
+
+    SWFをファイルに保存します。成功するとstatにはそのサイズが代入されます
 
   ・m_add v1, n2
 
-p2のオブジェクトを現在のフレームに追加し、v1にそれに対応するSWFDisplayItemオブジェクトを代入します
+    v1  SWFDisplayItemオブジェクトが代入される変数
+    n2  現在のフレームに追加するオブジェクト
 
-  ・m_output v1, n2
+    現在のフレームにオブジェクトを追加し、それに対応するSWFDisplayItemオブジェクトを取得します
 
-v1にSWFのデータを代入します。n2に出力される最大のサイズを入れてください
-当然ながらv1のサイズはn2で指定する以上である必要があります
-基本的にはCGI用です
+  ・m_output v1, n2, [n3]
 
-  ・m_remove
+    v1  SWFデータを出力する変数
+    n2  最大サイズ
+    n3  圧縮率。範囲は-1～9で数値が大きいほど高圧縮(-1は非圧縮)。省略時は-1  (minghsp.hpiのみのパラメータ)
 
-現在のフレームを削除します
+    SWFMovieオブジェクトに対応するSWFのデータを取得します。n2に出力される最大のサイズを入れてください
+    当然ながらv1に確保されているサイズはn2で指定する以上である必要があります
+
+  ・m_remove n1
+
+    n1  削除するオブジェクトに対応するSWFDisplayItemオブジェクト
+
+    現在のフレームでオブジェクトを削除します
 
   ・m_nextFrame
 
-新しいフレームを作成し、そのフレームに移ります
+    新しいフレームを作成し、そのフレームを現在のフレームとします
 
   ・m_setBackground n1, n2, n3
 
-ムービーの背景色を(n1,n2,n3)に設定します
+    n1  背景色の赤成分(0-255)
+    n2    〃    緑成分(0-255)
+    n3    〃    青成分(0-255)
+
+    ムービーの背景色を設定します
 
   ・m_setRate f1
 
-１フレーム当たりの時間をf1秒に設定します
+    f1  1秒間に表示するフレーム数
+
+    1秒間に表示するフレーム数を設定します
 
   ・m_setDimension f1, f2
 
-f1,f2  キャンバスサイズ
+    f1  横方向サイズ(ピクセル単位)
+    f2  縦方向サイズ(ピクセル単位)
 
-ムービーのキャンバスサイズ(領域の大きさ)を指定します
+    ムービーのキャンバスサイズ(領域の大きさ)を指定します
 
   ・m_setFrames n1
 
-総フレーム数をn1に設定します
+    n1  総フレーム数
+
+    総フレーム数を設定します
 
   ・m_streamMp3 s1
 
-s1のファイル名MP3を現在のフレームからストリーミング再生するようにします
+    s1  ストリーミング再生するMP3ファイル名
 
-  ・m_streamMp3_buf v1,n2
+    MP3を現在のフレームからストリーミング再生するようにします
 
-m_streamMp3と同じですがv1にはMP3のデータを入れた変数を、n2にはそのサイズを指定してください
+  ・m_streamMp3_buf v1, n2
+
+    v1  ストリーミング再生するMP3のデータ
+    n2  MP3のデータサイズ
+
+    MP3データを変数から読み込むこと以外はm_streamMp3と同じです
+
   ・m_addSound v1,s2,n3 (minghspj.hpiのみ)
 
     v1  サウンドを示すSWFDisplayItemオブジェクトが代入される変数
     s2  サウンドファイル名
     n3  サウンドのフラグ
 
-現在のフレームにイベントサウンドを設定します
-n3には次のフラグを設定します
-"|"でつなぐことで複数指定できます
-(例)
-  m_addSound iSound,"test.wav",SWFSOUND_44KHZ | SWFSOUND_16BITS | SWFSOUND_STEREO
-
-WAVEファイルの場合は設定しなくても構いません
-
-SWFSOUND_NOT_COMPRESSED    入力ファイルは非圧縮のRAWファイル。非指定時これ
-SWFSOUND_ADPCM_COMPRESSED                wav2adpcmで変換したADPCMファイル
-SWFSOUND_MP3_COMPRESSED                  MP3ファイル
+    現在のフレームにイベントサウンドを設定します
+    n3には次のフラグを設定します
+SWFSOUND_NOT_COMPRESSED   入力ファイルは非圧縮のRAWファイル。非指定時これ
+SWFSOUND_ADPCM_COMPRESSED               wav2adpcmで変換したADPCMファイル
+SWFSOUND_MP3_COMPRESSED                 MP3ファイル
 
 SWFSOUND_5KHZ             サンプリング周波数が5500。非指定時これ
 SWFSOUND_11KHZ                                11000
@@ -437,6 +446,11 @@ SWFSOUND_16BITS                           16
 
 SWFSOUND_MONO             モノラル。非指定時これ
 SWFSOUND_STEREO           ステレオ
+
+    "|"(論理和演算子)でつなぐことで複数同時に指定できます
+    (例)
+      m_addSound iSound,"test.wav",SWFSOUND_44KHZ | SWFSOUND_16BITS | SWFSOUND_STEREO
+    WAVファイルの場合は設定しなくても構いません。設定しても無視されます
 
   ・m_addSound_buf v1,n2,n3 (minghspj.hpiのみ)
 
@@ -479,21 +493,21 @@ v1  作成したSWFShapeオブジェクトを代入する数値型変数
 
 ・s_setLine n1, n2, n3, n4, [n5]
 
-  n1  線の太さ（整数）
-  n2  線の色（赤成分）0～255
-  n3        （緑成分）0～255
-  n4        （青成分）0～255
-  n5        （透明度）0～255
+  n1  線の太さ
+  n2  線の色の赤成分(0～255)
+  n3    〃    緑成分(0～255)
+  n4    〃    青成分(0～255)
+  n5    〃    透明度(0～255)。省略時255
 
-  選択されたSWFShapeオブジェクトでこれから引く線の太さと色を設定します。n5を省略すると255が指定されたのと同じになります
+  選択されたSWFShapeオブジェクトでこれから引く線の太さと色を設定します
 
 ・s_addSolidFill v1, n2, n3, n4, [n5]
 
   v1  作成したSWFFillオブジェクトを代入する数値型変数
-  n2  塗りつぶし色（赤成分）0～255
-  n3              （緑成分）0～255
-  n4              （青成分）0～255
-  n5              （透明度）0～255
+  n2  塗りつぶし色の赤成分(0～255)
+  n3        〃      緑成分(0～255)
+  n4        〃      青成分(0～255)
+  n5        〃      透明度(0～255)
 
   選択されたSWFShapeオブジェクトに対するSWFFillオブジェクトを作成します。s_addSolidFillでは色からSWFFillオブジェクトを作成します。n5を省略すると255が指定されたのと同じになります
 

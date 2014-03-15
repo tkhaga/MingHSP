@@ -1,1 +1,1 @@
-gcc -s -o bmp2dbl.exe bmp2dbl.c mhsputil.c -lz -Os
+gcc -s -mwindows -o bmp2dbl.exe bmp2dbl.c mhsputil.c readbmp.c readpng.c readgif.c -lungif -lpng -lz -Os

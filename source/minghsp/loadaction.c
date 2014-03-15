@@ -31,7 +31,7 @@ EXPORT BOOL WINAPI SWFAction_load(HSPEXINFO *hei, int p2, int p3, int p4)
 	length = ((unsigned long)obj[0]      ) + ((unsigned long)obj[1] <<  8) +
 	         ((unsigned long)obj[2] << 16) + ((unsigned long)obj[3] << 24);
 	output = newSWFOutput();
-	SWFOutput_writeBuffer(output, obj + sizeof(unsigned long), length);
+	SWFOutput_writeBuffer(output, (char *)obj + sizeof(unsigned long), length);
 	SWFOutput_writeUInt8(output, SWFACTION_END);
 	*p1 = newSWFAction_fromOutput(output);
 	return 0;

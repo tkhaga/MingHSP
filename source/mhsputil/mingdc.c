@@ -1,20 +1,25 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <zlib.h>
 #include "hspdll.h"
 #include "../src/blocks/input.h"
 #include "../src/blocks/output.h"
 
 #include "mhsputil.h"
+#include "bmp2dbl.h"
 
 #undef EXPORT
 #define EXPORT __declspec(dllexport)
 
+void fileOutputMethod(byte b, void *data);
+
 EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 {
 	BMSCR *bm;
-	char *tmpbuf, *outdata, *p, *pp, *pt, *ppt, *outname;
+	unsigned char *tmpbuf, *outdata;
+	char *outname;
 	int alpha, level, hasalpha, lhsize, pals = 0;
 	unsigned long alwidth, tmpwidth, tmpsize = 0, x, y, outsize;
 	FILE *dbl;
@@ -28,25 +33,21 @@ EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 	if (level < 1 || level > 9 || alpha < 0 || alpha > 0xff)
 		return -1;
 
-	if (alpha == 0xff)
-	{
+	if (alpha == 0xff) {
 		hasalpha = 1;
 	}
-	else
-	{
+	else {
 		hasalpha = 2;
 	}
 
 	if (bm->palmode)
 		pals = bm->pals;
 
-	if (pals)
-	{
+	if (pals) {
 		tmpwidth = alwidth = (bm->sx + 3) & ~3;
 		tmpsize += pals * (2 + hasalpha);
 	}
-	else
-	{
+	else {
 		alwidth = (bm->sx * 3 + 3) & ~3;
 		tmpwidth = (alwidth + bm->sx) & ~3;
 	}
@@ -56,14 +57,13 @@ EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 	if (!tmpbuf)
 		return -2;
 
-	if (pals)
-	{
+	if (pals) {
+		unsigned char *p, *pp, *pt, *ppt;
+
 		p = tmpbuf;
-		pp = (char *)bm->pal;
-		if (hasalpha == 2)	/* 8bitパレットモード  透明度指定有り */
-		{
-			for (x = 0; x < pals; x++)
-			{
+		pp = (unsigned char *)bm->pal;
+		if (hasalpha == 2) {	/* 8bitパレットモード  透明度指定有り */
+			for (x = 0; x < pals; x++) {
 				*p++ = pp[2] * alpha >> 8;
 				*p++ = pp[1] * alpha >> 8;
 				*p++ = pp[0] * alpha >> 8;
@@ -71,10 +71,8 @@ EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 				pp += 4;
 			}
 		}
-		else
-		{	/* 8bitパレットモード  透明度指定無し */
-			for (x = 0; x < pals; x++)
-			{
+		else {	/* 8bitパレットモード  透明度指定無し */
+			for (x = 0; x < pals; x++) {
 				*p++ = pp[2];
 				*p++ = pp[1];
 				*p++ = pp[0];
@@ -82,26 +80,23 @@ EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 			}
 		}
 		pp = bm->pBit + ((bm->sy - 1) * alwidth);
-		for (y = 0; y < bm->sy; y++)
-		{
+		for (y = 0; y < bm->sy; y++) {
 			memcpy(p, pp, bm->sx);
 			p += tmpwidth;
 			pp -= alwidth;
 		}
 	}
-	else
-	{
+	else {
+		unsigned char *p, *pp, *pt, *ppt;
+
 		p = tmpbuf;
 		pp = bm->pBit + ((bm->sy - 1) * alwidth);
 
-		if (hasalpha == 2)	/* 24bitフルカラー  透明度指定有り */
-		{
-			for (y = 0; y < bm->sy; y++)
-			{
+		if (hasalpha == 2) {	/* 24bitフルカラー  透明度指定有り */
+			for (y = 0; y < bm->sy; y++) {
 				pt = p;
 				ppt = pp;
-				for (x = 0; x < bm->sx; x++)
-				{
+				for (x = 0; x < bm->sx; x++) {
 					*pt++ = alpha;
 					*pt++ = ppt[2] * alpha >> 8;
 					*pt++ = ppt[1] * alpha >> 8;
@@ -112,14 +107,11 @@ EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 				pp -= alwidth;
 			}
 		}
-		else
-		{	/* 24bitフルカラー  透明度指定無し */
-			for (y = 0; y < bm->sy; y++)
-			{
+		else {	/* 24bitフルカラー  透明度指定無し */
+			for (y = 0; y < bm->sy; y++) {
 				pt = p;
 				ppt = pp;
-				for (x = 0; x < bm->sx; x++)
-				{
+				for (x = 0; x < bm->sx; x++) {
 					*pt++;
 					*pt++ = ppt[2];
 					*pt++ = ppt[1];
@@ -139,12 +131,10 @@ EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 	if (compress2(outdata, &outsize, tmpbuf, tmpsize, level) != Z_OK)
 		return -3;
 
-	if (pals)
-	{
+	if (pals) {
 		lhsize = 6;
 	}
-	else
-	{
+	else {
 		lhsize = 5;
 	}
 
@@ -161,12 +151,10 @@ EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 	fputc(((outsize + lhsize) >>  8) & 0xff, dbl);
 	fputc(((outsize + lhsize)      ) & 0xff, dbl);
 
-	if (pals)
-	{
+	if (pals) {
 		fputc(3, dbl);	/* ピクセル当たり8bit */
 	}
-	else
-	{
+	else {
 		fputc(5, dbl);	/* ピクセル当たり32bit */
 	}
 
@@ -176,9 +164,7 @@ EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 	fputc((bm->sy >> 8) & 0xff, dbl);
 
 	if (pals)
-	{
 		fputc(pals - 1, dbl);	/* パレットモード時の色数 */
-	}
 
 	if(fwrite(outdata, sizeof(char), outsize, dbl) != outsize)
 		return -5;
@@ -188,6 +174,20 @@ EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 
 	return -(outsize + lhsize + 8);
 }
+
+#define NUM_SAMPLE 1024*512
+
+typedef struct{
+  short channels;
+  short format;
+  unsigned int srate;
+  short bits;
+  unsigned int datasize;
+} WAV_INFO;
+
+/*
+ * ADPCM tables
+ */
 
 static const int piIndexTable2[2] =
 {
@@ -230,7 +230,7 @@ static const int piStepSizeTable[89] =
     15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
 };
 
-void writeADPCMData(short *samples, int stereo, int sample_count, void* output) {
+void writeADPCMData(SWFInput input, int bits16, int stereo, int sample_count, SWFOutput output) {
   int nBits = 4;  /* number of bits per ADPCM sample */
   int iSignBit = 1 << (nBits-1);  /* Sign bit mask */
   const int*  piIndexTable = ppiIndexTables[nBits-2];  /* Select index table to use */
@@ -242,19 +242,31 @@ void writeADPCMData(short *samples, int stereo, int sample_count, void* output) 
   int iSampleCount = sample_count;  /* Number of samples. */
   int iChannelCount = 1 + stereo;  /* Number of channels (mono, stereo) */
 
-  short*  psSample = samples;  /* Pointer to start of 16-bit/sample data */
+  short*  psSample = malloc(sizeof(short) * NUM_SAMPLE * iChannelCount);  /* Pointer to start of 16-bit/sample data */
 
-  int i;
+  int i, j;
+  int sindex = NUM_SAMPLE * iChannelCount;
 
   /* Write number of bits per ADPCM sample */
   SWFOutput_writeBits(output, nBits-2, 2);
 
   for (i=0; i < iSampleCount; i++) {
+	if (sindex == NUM_SAMPLE * iChannelCount) {
+		if (bits16) {
+			for (j = 0; j < min(NUM_SAMPLE, iSampleCount - i) * iChannelCount; j++)
+				psSample[j] = (short)SWFInput_getSInt16(input);
+		}
+		else {
+			for (j = 0; j < min(NUM_SAMPLE, iSampleCount - i) * iChannelCount; j++)
+				psSample[j] = (short)SWFInput_getChar(input);
+		}
+		sindex = 0;
+	}
     if ((i & 0xfff) == 0) {
       int c;
       for (c=0; c<iChannelCount; c++) {
 	/* First sample in the block, so no delta */
-	short sSample = *psSample++;
+	short sSample = psSample[sindex++];
 	int iDiff;
 
 	/* Write full 16-bit sample */
@@ -263,9 +275,9 @@ void writeADPCMData(short *samples, int stereo, int sample_count, void* output) 
 
 	/* Calculate initial index & step */
 	if (iSampleCount == 1)  /* XXX - stereo OK? */
-	  iDiff = abs(*psSample - sSample);
+	  iDiff = abs(psSample[sindex] - sSample);
 	else
-	  iDiff = abs(*(psSample+1) - sSample);
+	  iDiff = abs(psSample[sindex+1] - sSample);
 	for (iIndex[c]=0; iIndex[c] < 88; iIndex[c]++)
 	  if (iDiff <= piStepSizeTable[iIndex[c]])
 	    break;
@@ -281,7 +293,7 @@ void writeADPCMData(short *samples, int stereo, int sample_count, void* output) 
     } else {
       int c;
       for (c=0; c<iChannelCount; c++) {
-	short sSample = *psSample++;
+	short sSample = psSample[sindex++];
 	int iDiff, iSign, iDelta, iVPDiff;
 	int k;
 
@@ -341,15 +353,8 @@ void writeADPCMData(short *samples, int stereo, int sample_count, void* output) 
       }
     }
   }
+  free(psSample);
 }
-
-typedef struct{
-  short channels;
-  short format;
-  unsigned int srate;
-  short bits;
-  unsigned int datasize;
-} WAV_INFO;
 
 WAV_INFO readWAVheader(SWFInput input)
 {
@@ -406,8 +411,10 @@ EXPORT BOOL WINAPI wav2adpcm(HSPEXINFO *hei, int p1, int p2, int p3)
   stereo = hei->HspFunc_prm_getdi(1);
 
   fp_in = fopen(fname_in, "rb");
-  if (!fp_in)
+  if (!fp_in) {
+    free(fname_tmp);
     return -1;
+  }
 
   fp_out = fopen(fname_out, "wb");
   free(fname_tmp);
@@ -432,37 +439,21 @@ EXPORT BOOL WINAPI wav2adpcm(HSPEXINFO *hei, int p1, int p2, int p3)
   }else{
     sample_count = SWFInput_length(input) / (1+bits16) / (1+stereo);
   }
-  samples = malloc(sizeof(short) * sample_count * (1+stereo));
-  if (!samples)
-  {
-    return -4;
-  }
-  i_sample = samples;
-  if (bits16)
-  {
-    for (i=0; i<sample_count*(1+stereo); i++) {
-      *i_sample = (short)SWFInput_getSInt16(input);
-      i_sample++;
-    }
-  }else{
-    for (i=0; i<sample_count*(1+stereo); i++) {
-      *i_sample = (short)SWFInput_getChar(input);
-      i_sample++;
-    }
-  }
-  destroySWFInput(input);
-  fclose(fp_in);
 
   /* create a SWFOutput */
   output = newSWFOutput();
 
-  writeADPCMData(samples, stereo, sample_count, output);
+  writeADPCMData(input, bits16, stereo, sample_count, output);
 
-  fsize = SWFOutput_length(output);
+  destroySWFInput(input);
+  fclose(fp_in);
+
+  fsize = SWFOutput_getLength(output);
 
   /* write to file */
   SWFOutput_writeToMethod(output, fileOutputMethod, fp_out);
 
+  destroySWFOutput(output);
   fclose(fp_out);
 
   return -fsize;
@@ -523,4 +514,133 @@ EXPORT BOOL WINAPI getwavinfo(HSPEXINFO *hei, int p1, int p2, int p3)
     flag |= 2;
 
   return -flag;
+}
+
+
+EXPORT BOOL WINAPI bmp2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
+{
+	FILE *fp, *dbl;
+	dbl_data bmpdata;
+	char *inname, *outname, *tmpname;
+	int c[3];
+	int format;
+	int index, alpha, level, lhsize;
+
+	#ifdef DEBUG
+	FILE *f = fopen("debug.txt", "a");
+	unsigned long before, after;
+	before =timeGetTime();
+	#endif
+
+	inname = hei->HspFunc_prm_gets();
+	tmpname = malloc(strlen(inname) + 7);
+	strcpy(tmpname, inname);
+	ChangeExt(tmpname, "dbl");
+	outname = hei->HspFunc_prm_getds(tmpname);
+
+	alpha = hei->HspFunc_prm_getdi(0xff);
+	level = hei->HspFunc_prm_getdi(9);
+
+	if (level < 1 || level > 9 || alpha < 0 || alpha > 0xff)
+		return -1;
+
+	fp = fopen(inname, "rb");
+	if (!fp) {
+		/* printf("Failed to open input file"); */
+		return -6;
+	}
+
+	c[0] = fgetc(fp);
+	c[1] = fgetc(fp);
+	c[2] = fgetc(fp);
+	format = BMP2DBL_UNKNOWN;
+
+	if (c[0] == 'B' && c[1] == 'M')
+		format = BMP2DBL_BMP;
+
+	if (c[0] == 'G' && c[1] == 'I')
+		format = BMP2DBL_GIF;
+
+	if (c[1] == 'P' && c[2] == 'N')
+		format = BMP2DBL_PNG;
+
+	fseek(fp, 0, SEEK_SET);
+
+	switch (format) {
+		case BMP2DBL_BMP:
+			if (!readBMP(fp, &bmpdata, alpha, level))
+				goto READ_ERROR;
+			break;
+		case BMP2DBL_GIF:
+			if (!readGif(inname, &bmpdata, alpha, level))
+				goto READ_ERROR;
+			break;
+		case BMP2DBL_PNG:
+			if (!readPNG(fp, &bmpdata, alpha, level))
+				goto READ_ERROR;
+			break;
+		case BMP2DBL_UNKNOWN:
+			/* printf("Unknown format"); */
+			fclose(fp);
+			return -2;
+		default:
+READ_ERROR:
+			/* printf("Read error"); */
+			fclose(fp);
+			return -3;
+	}
+
+	fclose(fp);
+
+	if (bmpdata.format == 3) {
+	  lhsize = 6;
+	}
+	else {
+	  lhsize = 5;
+	}
+
+	if (!outname) {
+		outname = malloc(strlen(inname) + 5);
+		strcpy(outname, inname);
+		ChangeExt(outname, "dbl");
+	}
+
+	dbl = fopen(outname, "wb");
+	free(outname);
+	if (!dbl) {
+		/* printf("Failed to open output file"); */
+		return -4;
+	}
+
+	fputs("DBl", dbl);
+	fputc(bmpdata.hasalpha + 1, dbl);
+	fputc(((bmpdata.length + lhsize) >> 24) & 0xff, dbl);
+	fputc(((bmpdata.length + lhsize) >> 16) & 0xff, dbl);
+	fputc(((bmpdata.length + lhsize) >>  8) & 0xff, dbl);
+	fputc(((bmpdata.length + lhsize)      ) & 0xff, dbl);
+
+	fputc(bmpdata.format, dbl);
+
+	fputc(bmpdata.width & 0xff, dbl);
+	fputc((bmpdata.width >> 8) & 0xff, dbl);
+	fputc(bmpdata.height & 0xff, dbl);
+	fputc((bmpdata.height >> 8) & 0xff, dbl);
+
+	if (bmpdata.format == 3)
+		fputc(bmpdata.format2, dbl);	/* パレットモード時の色数 */
+
+	if(fwrite(bmpdata.data, sizeof(char), bmpdata.length, dbl) != bmpdata.length) {
+		/* printf("Could not write all of the file"); */
+		return -5;
+	}
+
+	fclose(dbl);
+	free(bmpdata.data);
+
+	#ifdef DEBUG
+	after =timeGetTime();
+	fprintf(f, "%d\r\n", after-before);
+	fclose(f);
+	#endif
+	return 0;
 }

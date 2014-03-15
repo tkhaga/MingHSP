@@ -1,9 +1,7 @@
-include ../../config.make
+include ../../Makefile.config
 
-INCLUDES	+= -I..
-LIBS		+= -lm
-
-#DEBUG = --debug
+CFLAGS += -I..
+DEBUG = --debug
 
 # In case we need to get more information out of flex
 #FLEXDEBUG = -d
@@ -15,9 +13,6 @@ MOSTFILES = compile.o listaction.o \
 GENERATED = lex.swf4.c lex.swf5.c swf5compiler.tab.c swf4compiler.tab.c
 
 OFILES = $(MOSTFILES) compileaction.o
-
-## Needs to be placed after variable defs but before rules
-include ../../Rules.make
 
 all: $(OFILES)
 
@@ -48,9 +43,11 @@ test: $(MOSTFILES) main.o
 lex.swf4.o: lex.swf4.c
 
 #lex.swf4.c: swf4compiler.flex swf4compiler.tab.h
-#	flex $(FLEXDEBUG) -i -Pswf4 swf4compiler.flex
+#	#flex $(FLEXDEBUG) -i -Pswf4 swf4compiler.flex
+#	flex $(FLEXDEBUG) -Pswf4 swf4compiler.flex
 
 lex.swf5.o: lex.swf5.c
 
 #lex.swf5.c: swf5compiler.flex swf5compiler.tab.h
-#	flex $(FLEXDEBUG) -i -Pswf5 swf5compiler.flex
+#	#flex $(FLEXDEBUG) -i -Pswf5 swf5compiler.flex
+#	flex $(FLEXDEBUG) -Pswf5 swf5compiler.flex

@@ -17,7 +17,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/* $Id: sound.c,v 1.13 2003/11/08 18:24:57 whamann Exp $ */
+/* $Id: sound.c,v 1.14 2004/03/30 15:07:28 strk Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,7 +27,7 @@
 #include "character.h"
 #include "method.h"
 #include "input.h"
-
+#include "libming.h"
 
 struct SWFSound_s
 {

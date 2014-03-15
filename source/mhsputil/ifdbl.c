@@ -1,4 +1,4 @@
-/* ifdbl.spi DefineBitsLossless/DefineBitsLossless2 to DIB filter Ver 1.0 */
+/* ifdbl.spi DefineBitsLossless/DefineBitsLossless2 to DIB filter Ver 1.0a */
 
 #include <windows.h>
 #include <zlib.h>
@@ -26,11 +26,14 @@ typedef struct PictureInfo {
 
 #define DBLHEADERSIZE 14
 
+#undef min
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+
 static const char *pluginfo[] = {
 	"00IN",
-	"DefineBitsLossless/DefineBitsLossless2 to DIB filter Ver 1.0 (C) THAGA 2005",
+	"DefineBitsLossless/DefineBitsLossless2 to DIB filter Ver 1.0a (C) THAGA 2005-2006",
 	"*.dbl",
-	"DBL ファイル"
+	"DBL"
 };
 
 typedef int (CALLBACK *SPI_PROGRESS)(int, int, long);
@@ -52,31 +55,26 @@ EXPORT int WINAPI IsSupported(LPSTR filename, DWORD dw)
 	int bit;
 	DWORD BytesRead;
 
-	if ((dw & 0xffff0000) == 0)
-	{
+	if (!(dw & 0xffff0000)) {
 		if (!ReadFile((HANDLE)dw, header, DBLHEADERSIZE, &BytesRead, NULL)) {
 			return 0;
 		}
 		data = header;
 	}
-	else
-	{
+	else {
 		data = (char *)dw;
 	}
 
 	if (data[0] != 'D' || data[1] != 'B')
 		return 0;
 
-	if (data[2] == 'l')
-	{
+	if (data[2] == 'l') {
 		bit = data[8];
 	}
-	else if (data[2] == 'L')
-	{
+	else if (data[2] == 'L') {
 		bit = data[6];
 	}
-	else
-	{
+	else {
 		return 0;
 	}
 
@@ -92,13 +90,12 @@ EXPORT int WINAPI IsSupported(LPSTR filename, DWORD dw)
 EXPORT int WINAPI GetPictureInfo(
 		LPSTR buf, long len, unsigned int flag, struct PictureInfo *lpInfo)
 {
-	char header[DBLHEADERSIZE];
-	char *data;
+	unsigned char header[DBLHEADERSIZE];
+	unsigned char *data;
 	HANDLE hfile;
 	DWORD BytesRead;
 
-	if (!(flag & 7))
-	{
+	if (!(flag & 7)) {
 		hfile = CreateFile(buf, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 		if (hfile == INVALID_HANDLE_VALUE)
 			return 6;
@@ -115,16 +112,14 @@ EXPORT int WINAPI GetPictureInfo(
 			return 2;
 		data = header;
 	}
-	else
-	{
+	else {
 		if (len < DBLHEADERSIZE)
 			return 2;
-		data = (char *)buf;
+		data = (unsigned char *)buf;
 	}
 
 	InitIO(data, 2);
-	switch(getChar())
-	{
+	switch(getChar()) {
 		case 'l':
 			IOseek(5);
 			break;
@@ -135,8 +130,7 @@ EXPORT int WINAPI GetPictureInfo(
 			return 2;
 	}
 
-	switch(getChar())
-	{
+	switch(getChar()) {
 		case 3:
 			lpInfo->colorDepth = 8;
 			break;
@@ -174,9 +168,9 @@ int WINAPI GetPicture(
 	long height;
 	unsigned long width, imgwidth, dibwidth, srcsize, imgsize = 0, dibsize, infosize, palsize, outsize;
 	unsigned long x, y;
-	unsigned int hasalpha, pals, bit, r, g, b;
+	unsigned int hasalpha, pals, bit;
 
-	if ((flag & 7) == 0) {
+	if (!(flag & 7)) {
 		hfile = CreateFile(buf, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 		if (hfile == INVALID_HANDLE_VALUE)
 			return 6;
@@ -189,8 +183,8 @@ int WINAPI GetPicture(
 			CloseHandle(hfile);
 			return 6;
 		}
-		data = (char *)LocalAlloc(LMEM_FIXED, datasize);
-		if (data == NULL) {
+		data = LocalAlloc(LMEM_FIXED, datasize);
+		if (!data) {
 			CloseHandle(hfile);
 			return 5;
 		}
@@ -204,23 +198,16 @@ int WINAPI GetPicture(
 			LocalFree(data);
 			return 6;
 		}
-	}
-	else
-	{
-		data = buf;
+	} else {
+		data = (unsigned char *)buf;
 		datasize = len;
 	}
-
-	if (lpPrgressCallback != NULL)
-		if (lpPrgressCallback(0, 1, lData)) /* 0% */
-			return 1;
 
 	infosize = sizeof(BITMAPINFOHEADER);
 
 	InitIO(data, 2);
 
-	switch(getChar())
-	{
+	switch(getChar()) {
 		case 'l':
 			hasalpha = getChar();
 			srcsize = getLongBE();
@@ -233,8 +220,7 @@ int WINAPI GetPicture(
 			return 2;
 	}
 
-	switch(getChar())
-	{
+	switch(getChar()) {
 		case 3:
 			pals = 1;
 			bit = 8;
@@ -250,15 +236,12 @@ int WINAPI GetPicture(
 	width      = getShortBE();
 	height     = getShortBE();
 
-	if (pals)
-	{
+	if (pals) {
 		pals = getChar() + 1;
 		imgwidth = dibwidth = (width + 3) & ~3;
 		palsize = pals * (2 + hasalpha);
 		infosize += sizeof(RGBQUAD) * 256;
-	}
-	else
-	{
+	} else {
 		dibwidth = (width * 3 + 3) & ~3;
 		imgwidth = width * 4;
 		palsize = 0;
@@ -276,14 +259,12 @@ int WINAPI GetPicture(
 		return 4;
 
 	outsize = imgsize;
-	if (uncompress(imgdata, &outsize, (unsigned char *)IOgetPtr(), srcsize) != Z_OK)
-	{
+	if (uncompress(imgdata, &outsize, (unsigned char *)IOgetPtr(), srcsize) != Z_OK) {
 		HeapDestroy(hdbl);
 		return 8;
 	}
 
-	if (outsize != imgsize)
-	{
+	if (outsize != imgsize) {
 		HeapDestroy(hdbl);
 		return 3;
 	}
@@ -291,15 +272,17 @@ int WINAPI GetPicture(
 	*pHBInfo = LocalAlloc(LMEM_MOVEABLE, infosize);
 	*pHBm    = LocalAlloc(LMEM_MOVEABLE, dibsize);
 
-	if (*pHBInfo == NULL || *pHBm == NULL) {
-		if (*pHBInfo != NULL) LocalFree(*pHBInfo);
-		if (*pHBm != NULL) LocalFree(*pHBm);
+	if (!*pHBInfo || !*pHBm) {
+		if (*pHBInfo)
+			LocalFree(*pHBInfo);
+		if (*pHBm)
+			LocalFree(*pHBm);
 		return 4;
 	}
 
 	pinfo  = (BITMAPINFO *)LocalLock(*pHBInfo);
 	pbmdat = (unsigned char *)LocalLock(*pHBm);
-	if (pinfo == NULL || pbmdat == NULL) {
+	if (!pinfo || !pbmdat) {
 		LocalFree(*pHBInfo);
 		LocalFree(*pHBm);
 		return 5;
@@ -317,75 +300,60 @@ int WINAPI GetPicture(
 	pinfo->bmiHeader.biClrUsed			= 0;
 	pinfo->bmiHeader.biClrImportant		= 0;
 
-	if (pals)
-	{
+	if (pals) {
 		p = (unsigned char *)pinfo->bmiColors;
 		pp = imgdata;
 		ZeroMemory(p, sizeof(RGBQUAD) * 256);
-		if (hasalpha == 2)	/* 8bitパレットモード  透明度指定有り */
-		{
-			for (x = 0; x < pals; x++)
-			{
-				r = pp[0] + 255 - pp[3];
-				g = pp[1] + 255 - pp[3];
-				b = pp[2] + 255 - pp[3];
-				if (r > 255) r = 255;
-				if (g > 255) g = 255;
-				if (b > 255) b = 255;
-				*p++ = b;
-				*p++ = g;
-				*p++ = r;
-				*p++;
+		if (hasalpha == 2) {	/* 8bitパレットモード  透明度指定有り */
+			for (x = 0; x < pals; x++) {
+				*(unsigned long *)p = (min(0xff, pp[0] + 0xff - pp[3]) << 16) | 
+					(min(0xff, pp[1] + 0xff - pp[3]) << 8) | min(0xff, pp[2] + 0xff - pp[3]);
+				p += 4;
 				pp += 4;
 			}
-		}
-		else
-		{	/* 8bitパレットモード  透明度指定無し */
-			for (x = 0; x < pals; x++)
-			{
+		} else {
+			/* 8bitパレットモード  透明度指定無し */
+			for (x = 0; x < pals; x++) {
 				*p++ = pp[2];
 				*p++ = pp[1];
 				*p++ = pp[0];
-				*p++;
+				p++;
 				pp += 3;
 			}
 		}
 		p = pbmdat;
 		pp = imgdata + palsize + ((height - 1) * imgwidth);
-		for (y = 0; y < height; y++)
-		{
+		for (y = 0; y < height; y++) {
 			memcpy(p, pp, width);
 			p += dibwidth;
 			pp -= imgwidth;
 		}
 	}
-	else
-	{
+	else {
 		p = pbmdat;
 		pp = imgdata + ((height - 1) * imgwidth);
 
-		if (hasalpha == 2)	/* 24bitフルカラー  透明度指定有り */
-		{
+		if (hasalpha == 2) {
+			/* 24bitフルカラー  透明度指定有り */
 			#ifdef DEBUG
 			FILE *f = fopen("debug.txt", "a");
 			unsigned long before, after;
 			before =timeGetTime();
 			#endif
-			for (y = 0; y < height; y++)
-			{
+			for (y = 0; y < height; y++) {
 				pt = p;
 				ppt = pp;
-				for (x = 0; x < width; x++)
-				{
-					r = ppt[1] + 255 - ppt[0];
-					g = ppt[2] + 255 - ppt[0];
-					b = ppt[3] + 255 - ppt[0];
-					if (r > 255) r = 255;
-					if (g > 255) g = 255;
-					if (b > 255) b = 255;
-					*pt++ = b;
-					*pt++ = g;
-					*pt++ = r;
+				for (x = 0; x < width; x++) {
+					/*
+					*(unsigned long *)pt = (min(0xff, ppt[1] + 0xff - ppt[0]) << 16) | 
+						(min(0xff, ppt[2] + 0xff - ppt[0]) << 8) | min(0xff, ppt[3] + 0xff - ppt[0]);
+					pt += 3;
+					ppt += 4;
+					*/
+					/* 上の書き方よりコードが縮む */
+					*pt++ = min(0xff, ppt[3] + 0xff - ppt[0]);
+					*pt++ = min(0xff, ppt[2] + 0xff - ppt[0]);
+					*pt++ = min(0xff, ppt[1] + 0xff - ppt[0]);
 					ppt += 4;
 				}
 				p += dibwidth;
@@ -397,14 +365,12 @@ int WINAPI GetPicture(
 			fclose(f);
 			#endif
 		}
-		else
-		{	/* 24bitフルカラー  透明度指定無し */
-			for (y = 0; y < height; y++)
-			{
+		else {
+			/* 24bitフルカラー  透明度指定無し */
+			for (y = 0; y < height; y++) {
 				pt = p;
 				ppt = pp;
-				for (x = 0; x < width; x++)
-				{
+				for (x = 0; x < width; x++) {
 					*pt++ = ppt[3];
 					*pt++ = ppt[2];
 					*pt++ = ppt[1];
@@ -421,11 +387,8 @@ int WINAPI GetPicture(
 	LocalUnlock(*pHBInfo);
 	LocalUnlock(*pHBm);
 
-	if ((flag & 7) == 0) LocalFree(data);
-
-	if (lpPrgressCallback != NULL)
-		if (lpPrgressCallback(1, 1, lData)) /* 100% */
-			return 1;
+	if (!(flag & 7))
+		LocalFree(data);
 
 	return 0;
 }
