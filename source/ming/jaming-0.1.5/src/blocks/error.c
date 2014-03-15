@@ -21,15 +21,15 @@ void warn_default(char *msg, ...)
   va_start(args, msg);
 #ifdef WIN32
   vsprintf(buf, msg, args);
-  funclen = strlen(funcname);
-  warnsize += funclen + strlen(buf) + 4;
+  funclen = lstrlen(funcname);
+  warnsize += funclen + lstrlen(buf) + 4;
   if (warnsize < warnlimit && warnbuf != NULL)
   {
-    strcat(warnbuf, funcname);
-    strcat(warnbuf, ": ");
+    lstrcat(warnbuf, funcname);
+    lstrcat(warnbuf, ": ");
     warnbuf += funclen + 2;
     warnbuf += vsprintf(warnbuf, msg, args);
-    strcat(warnbuf, "\n");
+    lstrcat(warnbuf, "\r\n");
     warnbuf += 2;
   }
 #else
@@ -44,11 +44,11 @@ void error_default(char *msg, ...)
 
   va_start(args, msg);
 #ifdef WIN32
-  strcpy(buf, "命令 \"");
+  lstrcpy(buf, "命令 \"");
   if (funcname[0] != '\0')
-    strcat(buf, funcname);
-  strcat(buf, "\" 内でエラーが発生しました\n\nエラーメッセージ: ");
-  vsprintf(&buf[strlen(buf)], msg, args);
+    lstrcat(buf, funcname);
+  lstrcat(buf, "\" 内でエラーが発生しました\n\nエラーメッセージ: ");
+  vsprintf(&buf[lstrlen(buf)], msg, args);
   MessageBox(NULL, buf, "MingHSP", MB_OK | MB_ICONSTOP);
 #else
   vprintf(msg, args);

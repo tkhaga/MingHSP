@@ -1,0 +1,296 @@
+ver.1.0 beta 8 (06/01/01)
+
+  --全体--
+    ・gccを3.4.4に変更
+    ・libungifを4.1.4に更新
+    ・ソースファイルのディレクトリ構造を整理
+    ・minghsp.hpiはHSP 2.6以降専用となりました
+    ・ライセンス関係を整理
+
+  --MingHSP--
+    ・Ming 0.3 beta 1を適用。今後はこっちをメインにします
+      今までのJaming-0.1.5版はminghspj.hpiにリネームされています
+
+      追加された命令
+
+        sel_v
+        sel_c
+        sel_si
+        destroy_snd
+        mhsp_getaswarn
+        mhsp_getaserror
+        ming_useConstants
+        m_importChar
+        m_addFont
+        m_importFont
+        m_addExport
+        m_writeExports
+        m_protect
+        s_getPenX
+        s_getPenY
+        s_getPen
+        i_setMaskLevel
+        i_endMask
+        i_getX
+        i_getY
+        i_getXScale
+        i_getYScale
+        i_getXSkew
+        i_getYSkew
+        i_getRot
+        i_getDepth
+        t_addUTF8String
+        t_getUTF8Width
+        fnt_getUTF8Width
+        fnt_getShape
+        tf_setPadding
+        tf_addUTF8String
+        tf_addChars
+        b_setMenu
+        b_addSound
+        SWFVideoStream
+        v_setDimension
+        v_getNumFrames
+        c_addChars
+        c_addUTF8Chars
+        SWFSound
+        SWFSound_buf
+        si_noMultiple
+        si_loopInPoint
+        si_loopOutPoint
+        si_loopCount
+
+      仕様が変更された命令
+
+        m_save
+        m_output
+        m_streamMp3
+        m_streamMp3_buf
+        m_startSound
+        m_stopSound
+        mc_startSound
+        mc_stopSound
+
+      削除された命令
+
+	m_addSound
+	m_addSound_buf
+	m_setButtonSound
+	fnt_setFlags
+	mc_addSound
+	mc_addSound_buf
+
+      その他変更点
+
+          SWFSOUND_～
+        の定数群が
+          SWF_SOUND_～
+        にリネームされました
+    ・Ming 0.3 beta 1版のアクションスクリプトコンパイラにCoa氏のaclib (Build:051220)に差し替え。これによりアクションスクリプトのエラーでは終了しなくなりました
+
+    以下はJaming-0.1.5版にも適用される変更です
+    ・SWFFont命令で、FDBファイルかどうかをファイルの先頭を見て判定するようにした
+    ・MingHSP ver.1.0 beta 1から取り入れたUTF8変換コードがGPLのため、GPL違反の状態でした。これを解消すべく代替のコードを作成し、差し替えました(toutf8.c)
+    ・t_getAscent
+      t_getDescent
+      t_getLeading
+      が間違って実装されていたのを修正
+    ・Makefileを使った時libmingをインストールしないようにした
+    ・mhsp_setwarnbufで指定したバッファに取得するWarningの改行コードがCRLFになるようにした
+    ・m_addSound_buf, mc_addSound_buf, SWFBitmap, SWFBitmap_bufの仕様を変更。
+    ・s_setLine, s_addSolidFill, t_setColor, tf_setColorでα値を省略した場合は初期値0xffを適用するようにした
+      (g_addEntry, i_multColorではHSP 3での利便性を考慮して初期値は適用されません)
+    ・s_addBitmapFill, s_addGradientFillで設定するフラグが省略された場合、それぞれ初期値としてSWFFILL_TILED_BITMAP, SWFFILL_LINEAR_GRADIENTを適用するようにした
+    ・マニュアルはおろかPHP版にすら実装されていないtf_setLength命令を追加
+    ・SWFMovie命令で、第二引数が0以上であればそれをバージョン番号としてSWFMovieオブジェクトを作成するようにした(PHP版と同じ動作)
+    ・ActionScriptのエラー, 警告を取得するmhsp_getaserror, mhsp_getaswarn命令を追加(Ming 0.3 beta 1版のみ)
+    ・beta 6以降SWFAction_save命令でメモリーリークがあったのを修正しました
+    ・そのほか雑多な変更
+
+  --mingdc--
+    ・vram2dblの仕様を変更して、ファイルに出力するようにした
+    ・vram2dblの処理を改良(乗算を減らした。速くなるかどうかは不明)
+    ・wav2adpcmの仕様を変更して、ファイルに出力するようにした
+
+  --wav2adpcm--
+    ・拡張子変更部分を共通ルーチン化
+
+  --その他--
+    ・gif2dblが動作するようになった(libungif 4.1.4の公式リリースに対する差分を同梱)
+    ・1，4，8bitパレット、24bitフルカラーBMP画像をDBLに変換するbmp2dbl.exeを追加
+    ・DBL形式画像を見るためのSusieプラグイン、ifdbl.spiを追加
+    ・更新履歴をchangelog.txtに分離
+
+ver.1.0 beta 7.1 (05/09/13)
+
+  --MingHSP--
+    ・SWFBitmap命令で画像ファイルのフォーマットを自動判定するようにした。これにより画像ファイルの拡張子は関係無くなりました
+    ・HSP 3.0対応(minghsp3.as)
+
+  --swfpreview--
+    ・swf_get_quality，swf_set_quality，swf_get_loop，swf_set_loop命令を追加
+    ・swfpreviewで一度SWFファイルを開いた後、別のファイルを開けなかったのを修正
+    ・正しいファイルかどうか判定するようにした(マジックナンバーを見ているだけ)
+    ・非圧縮SWFの場合正常に読み込めたらstatに画面サイズを入れるようにした(上位16ビットが縦サイズ、下位16ビットが横サイズ、ピクセル単位)
+    ・HSP 3.0対応版を同梱(swfpreview3.as)
+
+  --mingdc--
+    ・使用しているzlibを1.2.2から1.2.3に更新
+
+  --その他--
+    ・リンク中に警告が出ないようMakefileやバッチファイルを修正
+    ・ソースファイルにもライセンスに関する記述をするようにした
+    ・mingtest.asのHSP 3.0対応版mingtest3.hspを同梱
+    ・書籍に載ることになったのでマニュアルの記述を増やした
+    ・BREAKTTC.EXEの同梱を止めた
+
+ver.1.0 beta 7 (05/06/30)
+
+  --MingHSP--
+    ・マニュアルに載っていない命令で
+      m_labelFrame
+      mc_labelFrame
+      fnt_getAscent
+      fnt_getDescent
+      fnt_getLeading
+      t_getAscent
+      t_getDescent
+      t_getLeading
+      命令を追加
+    ・SWFAction_loadの仕様を変更
+    ・m_streamMp3_buf、SWFBitmap_buf、m_addSound_buf、mc_addSound_bufが事実上使用できなかったのを修正。戻り値のオブジェクトの参照を入力した変数に返すように変更。なお、このついでに入力に使用した変数の内容を後で変更してもいいようにした
+    ・WAVEファイル判定部分をちょっと改変
+    ・ソースコードの可読性の面での改良(あとwarningがでないように)
+    ・SWFBitmap命令で拡張子がdblで存在しないファイルを開いた時に一般保護違反になるのを修正。statに値を返すようにした
+    ・新たにfloat値を整数に変換するmhsp_int命令を追加
+    ・colconv命令の廃止。今まで
+        colconv 0xff,0,0xff,0xff
+        s_setLine w,stat
+      と書いていたのは
+        s_setLine w,0xff,0,0xff,0xff
+      と書くようになります
+    ・SWFTextField命令でフラグを設定する処理の実装し忘れを修正
+    ・fnt_setFlags命令用の定数のminghsp.asでの定義し忘れを修正
+    ・Makefileをlibmingをインストールしてからminghsp.hpiを作成するように変更
+
+  --swfpreview--
+    ・swfpreviewのswfpreview命令の第一引数を変数から文字列に変更
+    ・swfpreviewのswf_stop命令をswf_stopplayに変更(やってることも変わっています)
+    ・swfpreviewでインターフェースを解放していなかったのを修正。サウンドを再生中に終了してもエラーが出ないようになった
+    ・swfpreviewですでにFlashPlayerの子ウィンドウが作成されている場合にstatに値を代入するようにした
+    ・swfpreviewにswf_totalframes,swf_currentframe,swf_isplaying命令を追加
+
+  --mingdc--
+    ・データコンバーター用HSPプラグインmingdc.dllを追加。HSPのウィンドウの内容をMing用のDBL形式に変換するvram2dbl、非圧縮WAVEファイルをADPCM形式に変換するwav2adpcm、WAVEファイルの情報を取得するgetwavinfo命令が搭載されています
+
+  --wav2adpcm--
+    ・wav2adpcmを色々と改変
+
+  --その他--
+    ・周辺ツールを全部再コンパイルした
+    ・サンプルを修正
+    ・src/actioncompiler以下を同梱するのを止めた
+
+ver.1.0 beta 6.1 (05/05/15)
+  ・SWFAction_load命令を、ファイルから読み込む仕様に変更。それ以前にbeta 6ではSWFAction_load命令が機能すらしていませんでした
+  ・オリジナルのJaMingに対する更新ファイルが減るようにSWFAction_saveの実装を変更
+  ・サンプルのaction.asが仕様変更に対応していなかったので修正
+
+ver.1.0 beta 6 (05/05/15)
+  ・コンパイルしたActionScriptのオブジェクトをファイルに保存＆ロードするためのSWFAction_save,SWFAction_load命令を追加（使い方はmanual.txtに書いてあります）
+  ・次の命令の名前を変更した（左が変更前、右が変更後）。どうやらSWFSpriteというのは古い名称で、現在ではSWFMovieClipとするのが正しいようです
+  SWFSprite SWFMovieClip
+  sp_add mc_add
+  sp_remove mc_remove
+  sp_nextFrame mc_nextFrame
+  sp_setFrames mc_setFrames
+  sp_addSound mc_addSound
+  sp_addSound_buf mc_addSound_buf
+  sp_startSound mc_startSound
+  sp_stopSound mc_stopSound
+  sel_sp sel_mc
+  destroy_sp destroy_mc
+  ・Mingのマニュアルに載っていない機能のうち
+  s_drawGlyph
+  s_drawCircle
+  s_drawArc
+  s_drawCubicTo
+  s_drawCubic
+  i_setMatrix
+  i_addAction
+  命令を追加
+  ・SWFをHSPで見るためのモジュールswfpreview.asを追加。動作にはIE用のFlash PlayerとIE 5.0以上、HSP 2.6以上（HSP3は不可）、llmod、lolipop 3.0以上が必要です
+  ・MingHSPのサンプルを追加
+
+ver.1.0 beta 5 (05/03/22)
+  ・colconvの仕様を変更(変換結果をstatに代入するようにした)
+  ・g_addEntry命令が間違って実装されていたのを修正
+  ・下の上から二番目が完全でなかったのを修正
+  ・tf_addString,t_getWidthで２バイト文字が通らないバグを修正
+
+ver.1.0 beta 4 (05/03/19)
+  ・mhsp_selshape,mhsp_destroyshape命令等をそれぞれsel_s,destroy_sのように変更
+  ・オブジェクトを作成し、次に同じ種類のオブジェクトを作成するまではそのオブジェクトに対する操作をするのにsel_～系の命令を使わなくてよいように変更
+  ・上記の変更に伴い、minghsp.as,mingtest.asを更新
+  ・png2dbl.exe,gif2dbl.exeを追加。それぞれPNG,GIFファイルをMingで読み込めるDBL形式に変換するためのMing付属ツールです(ただしgif2dbl.exeの正常動作は確認できず)
+  ・エラー時のダイアログの表示を変更(変な英語だったのを日本語に)
+  ・コンパイラをMinGWに変更。makefile等もMinGW用のものに変更
+  ・SWFBitmap命令でDBLファイルが読み込めなかった(超どうしようもない)バグを修正
+  ・SWFBitmap命令で入力ファイル名の拡張子が全部小文字でなくても種類を判別できるように変更(これもバグといっちゃあバグである)
+
+ver.1.0 beta 3 (04/02/XX)
+  ・変数からの読みこみに対応したm_streamMp3_buf,m_addSound_buf,mhsp_SWFBitmap_buf,sp_addSound_buf命令を追加(ファイルから読みこむ場合とは使用方法が異なります)
+  ・m_addSound,sp_addSoundでRIFF WAVEを直接読みこめるようにした(データ部が無圧縮PCMであるファイルのみ。Ming内部ではRAWデータとして扱われます)
+  ・mhsp_destroyactionの宣言し忘れを修正(こんなのが多くて申し訳ありません)
+  ・wav2adpcmの改良
+  ・念のためエラーと警告の出力に使うバッファを4KBに拡張
+  ・警告出力のフォーマットを変更
+
+ver.1.0 beta 2 (04/02/04)
+  ・/src/actioncompiler下のソースファイルをbison 1.35,flex 2.5.4aで作成したものに置き換え
+(bisonはバージョンを下げた。flexは上げた。これによりSWFAction命令が正常に動作しないバグが直るはず)
+  ・mhsp_add,mhsp_sub,mhsp_mul,mhsp_div命令を追加(浮動小数点演算用命令)
+  ・SWFFont命令以外で内部でファイルを開く命令で、ファイルを閉じないようにした
+  ・PHP版では引数が省略されている場合に適用される省略値を考慮しないようにした(HSPでは問題があることが分かりました)
+  ・mhsp_fcloseall命令を追加
+  ・Mingをライブラリ化するようにした。これによりサイズが減りました(もっと早くに気付くべきだった…)
+  ・mhsp_convfloatをmhsp_floatに改名
+  ・SWFSprite系の命令のプレフィックスをs_からsp_に、SWFBitmap系でb_からbmp_に、SWFFont系でf_からfnt_に
+  ・JaMingで拡張された機能を使うため
+  m_addSound
+  m_startSound
+  m_stopSound
+  m_setButtonSound
+  sp_addSound
+  sp_startSound
+  sp_stopSound
+  fnt_setFlags
+  を追加
+  ・mhsp_destroy～系命令を追加
+  ・mhsp_set～系命令をmhsp_sel～に改名
+  ・定義し忘れの定数をminghsp.asに大量追加
+  ・間違えて定義していた定数を修正
+  ・t_getStringWidthをt_getWidthに改名(元々が間違っていました)
+  ・mhsp_setwarnbuf命令を追加
+  ・エラーが起きたときダイアログにメッセージを表示するようにした
+  ・m_setFrames命令の宣言し忘れを修正
+  ・m_streamMp3が正常に動作しなかったのを修正
+  ・内部でファイルを開く命令で、開けなかった場合にstatに値を返すようにした
+  ・wav2adpcm.exeを追加
+
+ver.1.0 beta 1 (04/01/11)
+  ・フォント関連のツールを同梱
+  ・PHPのマニュアルに載っていた幾つかの関数を追加
+  ・t_addString,t_getStringWidth,tf_addString命令で文字列をUTF-8に変換してからMingに渡すようにした
+  ・m_save命令で保存したSWFファイルのサイズをstatに代入するようにした
+  ・m_output命令が利用できるようになった
+
+ver.1.0 alpha 2 (04/01/01)
+  ・一部の関数でパラメータ省略時の初期値を考慮するようにした
+  ・とりあえずMing公式ページのマニュアルに書いてある全機能を利用できるようになった
+  ・命令の仕様を一部変更
+  ・minghsp.asで宣言を間違えていたところを修正
+  ・まだまだテスト用です
+
+ver.1.0 alpha 1 (03/07/13)
+  ・SWFShape、SWFMovie関連の諸命令群を実装。あくまでもテスト用

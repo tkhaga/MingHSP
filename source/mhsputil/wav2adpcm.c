@@ -1,164 +1,19 @@
-#include <windows.h>
+/*
+ * raw2adpcm converts a raw sound data to adpcm compressed.
+ * This is based on adpcm.cpp found at http://www.openswf.org .
+ * The original code is the code posted on news:forums.macromedia.com by Jonathan Gay.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <zlib.h>
-#include "hspdll.h"
 #include "../src/blocks/input.h"
 #include "../src/blocks/output.h"
 
-#undef EXPORT
-#define EXPORT __declspec(dllexport)
+#include "mhsputil.h"
 
-EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
-{
-	BMSCR *bm;
-	unsigned char *buf, *tmpbuf, *outdata, *p, *pp;
-	short alpha, level, hasalpha, channels, lhsize;
-	unsigned int width, tmpwidth, tmpsize, y, x, k;
-	unsigned long outsize;
-	PVAL2 *pvbuf;
-
-	hei->HspFunc_prm_getv();
-	pvbuf = *hei->pval;
-	bm = (BMSCR *)hei->HspFunc_getbmscr(*hei->actscr);
-	alpha = hei->HspFunc_prm_getdi(0xff);
-	level = hei->HspFunc_prm_getdi(9);
-
-	if (level < 1 || level > 9 || alpha < 0 || alpha > 0xff)
-		return -1;
-
-	if (alpha == 0xff)
-	{
-		hasalpha = 1;
-	}else{
-		hasalpha = 2;
-	}
-
-	if (bm->palmode)
-	{
-		channels = 1;
-		width = (bm->sx + 3) & ~3;
-	}else{
-		channels = 4;
-		width = (bm->sx * 3 + 3) & ~3;
-	}
-
-	tmpwidth = (bm->sx * channels + 3) & ~3;
-  tmpsize = tmpwidth * bm->sy;
-
-    tmpsize += bm->pals * (2 + hasalpha);
-	tmpbuf = malloc(tmpsize);
-
-  if (bm->palmode)
-  {
-    p = tmpbuf;
-    pp = (char *)bm->pal;
-    if (hasalpha == 2)	/* 8bitパレットモード  透明度指定有り */
-    {
-      for (x = 0; x < bm->pals; x++)
-      {
-        *p++ = pp[2] * alpha >> 8;
-        *p++ = pp[1] * alpha >> 8;
-        *p++ = pp[0] * alpha >> 8;
-        *p++ = alpha;
-        pp += 4;
-      }
-    }else{	/* 8bitパレットモード  透明度指定無し */
-      for (x = 0; x < bm->pals; x++)
-      {
-        *p++ = pp[2];
-        *p++ = pp[1];
-        *p++ = pp[0];
-        pp += 4;
-      }
-    }
-    pp = bm->pBit + ((bm->sy - 1) * width);
-    for (y = 0; y < bm->sy; y++)
-    {
-      memcpy(p, pp, bm->sx);
-      p += tmpwidth;
-      pp -= width;
-    }
-  }else{
-    if (hasalpha == 2)	/* 24bitフルカラー  透明度指定有り */
-    {
-	  for (y = 0; y < bm->sy; y++)
-	  {
-		p = tmpbuf + (y * tmpwidth);
-		pp = bm->pBit + ((bm->sy - 1 - y) * width);
-	    for (x = 0; x < bm->sx; x++)
-	    {
-          *p++ = alpha;
-          *p++ = pp[2] * alpha >> 8;
-          *p++ = pp[1] * alpha >> 8;
-          *p++ = pp[0] * alpha >> 8;
-          pp += 3;
-	    }
-	  }
-    }else{	/* 24bitフルカラー  透明度指定無し */
-	  for (y = 0; y < bm->sy; y++)
-	  {
-		p = tmpbuf + (y * tmpwidth);
-		pp = bm->pBit + ((bm->sy - 1 - y) * width);
-	    for (x = 0; x < bm->sx; x++)
-	    {
-          *p++;
-          *p++ = pp[2];
-          *p++ = pp[1];
-          *p++ = pp[0];
-          pp += 3;
-	    }
-	  }
-    }
-  }
-	outdata = malloc(tmpsize);
-
-	compress2(outdata, &outsize, tmpbuf, tmpsize, level);
-
-	if (bm->palmode)
-	{
-	  lhsize = 6;
-	}else{
-	  lhsize = 5;
-	}
-
-	free(tmpbuf);
-
-    hei->HspFunc_val_realloc(pvbuf, outsize + lhsize + 8, 0);
-    buf = pvbuf->pt;
-
-	*buf++ = 'D';
-	*buf++ = 'B';
-	*buf++ = 'l';
-	*buf++ = hasalpha;
-	*buf++ = ((outsize + lhsize) >> 24) & 0xff;
-	*buf++ = ((outsize + lhsize) >> 16) & 0xff;
-	*buf++ = ((outsize + lhsize) >> 8) & 0xff;
-	*buf++ = (outsize + lhsize) & 0xff;
-
-	if (bm->palmode)
-	{
-	  *buf++ = 3;	/* ピクセル当たり8bit */
-	}else{
-	  *buf++ = 5;	/* ピクセル当たり32bit */
-	}
-
-	*buf++ = bm->sx & 0xff;
-	*buf++ = (bm->sx >> 8) & 0xff;
-	*buf++ = bm->sy & 0xff;
-	*buf++ = (bm->sy >> 8) & 0xff;
-
-	if (bm->palmode)
-	{
-	  *buf++ = bm->pals - 1;	/* パレットモード時の色数 */
-	}
-
-	memcpy(buf, outdata, outsize);
-
-	free(outdata);
-
-	return -(outsize + lhsize + 8);
-}
+/*
+ * ADPCM tables
+ */
 
 static const int piIndexTable2[2] =
 {
@@ -313,14 +168,6 @@ void writeADPCMData(short *samples, int stereo, int sample_count, void* output) 
     }
   }
 }
-
-unsigned long idx = 0;
-
-void _method(byte b, byte *data)
-{
-  data[idx++] = b;
-}
-
 typedef struct{
   short channels;
   short format;
@@ -365,41 +212,74 @@ notwave:
   return info;
 }
 
-EXPORT BOOL WINAPI wav2adpcm(HSPEXINFO *hei, int p1, int p2, int p3)
+void main(int argc, char *argv[])
 {
-  FILE *fp_in;
+  FILE *fp_in, *fp_out;
   SWFInput input;
   SWFOutput output;
-  short *samples, *i_sample, bits16, stereo;
-  unsigned int i, fsize, sample_count;
-  char *fname, *p;
-  PVAL2 *pvout;
+  short *samples, *i_sample;
+  unsigned int i, type, bits16, stereo, sample_count;
+  char *fname;
+  char *tmp, *tmp2;
   WAV_INFO wav;
 
-  hei->HspFunc_prm_getv();
-  pvout = *hei->pval;
-  fname = hei->HspFunc_prm_gets();
-  bits16 = hei->HspFunc_prm_getdi(1);
-  stereo = hei->HspFunc_prm_getdi(1);
+  if (argc < 2) {
+    printf("%s converts a raw sound data to adpcm compressed.\
+\n\nUsage:\
+\n%s in out [16bit] [stereo]\
+\n\n\
+\nin     : the filename of input file, raw sound data\
+\nout    : the filename of output file, ADPCM compressed\
+\n16bit  : bits per sample     0=8bit 1=16bit   default=1=16bit\
+\nstereo : number of channels  0=mono 1=stereo  default=1=stereo\
+", argv[0], argv[0]);
+    exit(0);
+  }
 
-  fp_in = fopen(fname, "rb");
+  if (argc < 3)
+  {
+    fname = malloc(strlen(argv[1]) + 7);
+    strcpy(fname, argv[1]);
+    ChangeExt(fname, "adpcm");
+  }
+  else
+  { 
+    fname = argv[2];
+  }
 
-  if (!fp_in)
-    return -1;
+  fp_in = fopen(argv[1], "rb");
+  if (!fp_in) {
+    fprintf(stderr, "file '%s' cannot open.\n", argv[1]);
+    exit(1);
+  }
+  fp_out = fopen(fname, "wb");
+  if (!fp_out) {
+    fprintf(stderr, "file '%s' cannnot open.\n", fname);
+    exit(1);
+  }
+  bits16 = 1;
+  if (argc > 3) bits16 = atoi(argv[3]);
+  stereo = 1;
+  if (argc > 4) stereo = atoi(argv[4]);
 
   input = newSWFInput_file(fp_in);
 
   wav = readWAVheader(input);
 
-  if (wav.format != 1)
-    return -2;
-  stereo = wav.channels - 1;
-  if (wav.bits == 8)
-    bits16 = 0;
-
   /* read RAW sound data */
   if (wav.datasize)
   {
+    printf("input file '%s' is RIFF WAVE\
+\nsampling rate :%d\nchannnels     :%d\nbits          :%d\n\
+", argv[1], wav.srate, wav.channels, wav.bits);
+    if (wav.format != 1)
+    {
+      printf("unsupported format.");
+      exit(1);
+    }
+    stereo = wav.channels - 1;
+    if (wav.bits == 8)
+      bits16 = 0;
     sample_count = wav.datasize / (1+bits16) / (1+stereo);
   }else{
     sample_count = SWFInput_length(input) / (1+bits16) / (1+stereo);
@@ -426,69 +306,11 @@ EXPORT BOOL WINAPI wav2adpcm(HSPEXINFO *hei, int p1, int p2, int p3)
 
   writeADPCMData(samples, stereo, sample_count, output);
 
-  fsize = SWFOutput_length(output);
+  /* write to file */
+  SWFOutput_writeToMethod(output, fileOutputMethod, fp_out);
 
-  hei->HspFunc_val_realloc(pvout, fsize, 0);
-  //SWFOutput_writeBuffer(output, pvout->pt, fsize);
-  SWFOutput_writeToMethod(output, (SWFByteOutputMethod)_method, pvout->pt);
-  idx = 0;
+  fclose(fp_out);
+  free(fname);
 
-  return -fsize;
-}
-
-EXPORT BOOL WINAPI getwavinfo(HSPEXINFO *hei, int p1, int p2, int p3)
-{
-  char flag = 0;
-  unsigned int *p;
-  double length;
-  FILE *fp;
-  SWFInput input;
-  WAV_INFO wav;
-  PVAL2 *pv;
-
-  p = (unsigned int*)hei->HspFunc_prm_getv();
-  pv = *hei->pval;
-  fp = fopen(hei->HspFunc_prm_gets(), "rb");
-
-  if (!fp)
-    return -1;
-
-  input = newSWFInput_file(fp);
-
-  wav = readWAVheader(input);
-
-  fclose(fp);
-
-  if (pv->flag != 4 || pv->len[1] < 6)
-    return -2;
-
-  p[0] = wav.datasize / (wav.channels * wav.srate * (wav.bits / 8));
-  p[1] = wav.channels;
-  p[2] = wav.format;
-  p[3] = wav.srate;
-  p[4] = wav.bits;
-  p[5] = wav.datasize;
-
-  if (wav.channels == 2)
-    flag |= 1;
-
-  switch (wav.srate)
-  {
-    case 11025:
-      flag |= 4;
-      break;
-    case 22050:
-      flag |= 8;
-      break;
-    case 44100:
-      flag |= 12;
-      break;
-    default:
-      break;
-  }
-
-  if (wav.bits == 16)
-    flag |= 2;
-
-  return -flag;
+  exit(0);
 }
