@@ -1,4 +1,4 @@
-MingHSP ver.1.0 beta11 (06/07/10)
+MingHSP ver1.0 beta11.1 (06/07/10)
 ※これはまだベータ版なので仕様は予告無く変更されることがあります
 
   作者
@@ -321,6 +321,7 @@ MingHSP ver.1.0 beta11 (06/07/10)
         mhsputil.c         共通で利用されるコード
         mhsputil.h
         ifdbl.c            ifdbl.spiのソース
+        ifdbl.rc
         ifdbl.def
         ifdbl.bat
         mingdc.c           mingdc.dllのソース
@@ -625,11 +626,33 @@ MingHSP ver.1.0 beta11 (06/07/10)
   ＠ライセンス等
 
     0.minghsp.hpi, minghspl.hpi, minghspsl.hpiはLGPL verion 2.1のライブラリ
+        Ming
+          Copyright (C) 2002  Opaque Industries - http://www.opaque.net/
+        aclib
+          Copyright (C) 2005-2006  Coa  - http://www.geocities.jp/coa9999
+          Copyright (C) 2002  Opaque Industries - http://www.opaque.net/
       を含んでいますが、これら自体はLGPL version 2.1の第6節における
       "work that uses the Library"なのでLGPL version 2.1の適用外となります。
+      (後述しますがminghsp.hpi, minghspl.hpi, minghspsl.hpiには
+      川合堂ライセンス-01を適用しています)
       ただし、minghsp.hpi, minghspl.hpi, minghspsl.hpiを使用したプログラムを
-      これらと一緒に配布する場合は、lgpl.txtを配布ファイルに同梱してください
+      これらと一緒に配布する場合は、ドキュメント中に同様にMingとaclibを含み
+      これらがLGPL verion 2.1により保護されている旨明記し、さらにlgpl.txtを
+      配布ファイルに同梱してLGPL verion 2.1の詳細はこのファイルを参照する
+      ように告知してください。
       これはLGPL version 2.1の要請によります。
+
+      記述例)
+        minghsp.hpiはLGPL version 2.1で保護されているソフトウェア
+
+        Ming
+          Copyright (C) 2002  Opaque Industries - http://www.opaque.net/
+        aclib
+          Copyright (C) 2005-2006  Coa  - http://www.geocities.jp/coa9999
+          Copyright (C) 2002  Opaque Industries - http://www.opaque.net/
+
+        を含んでいます。LGPL version 2.1の詳細についてはlgpl.txtを参照して
+        ください。
 
     1.アーカイブ内のソフトウェアの中には
         zlib      Copyright (C) 1995-2004 Jean-loup Gailly and Mark Adler

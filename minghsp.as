@@ -174,7 +174,7 @@
 	#func s_getPenY s_getPenY 1
 	#func s_getPen s_getPen $202
 	#func s_newStyles s_newStyles 0
-	#func s_loadPdr s_loadPdr 6
+	#func s_loadPdr s_loadPdr $202
 
 ;SWFDisplayitem
 	#func i_moveTo i_moveTo 0
@@ -445,7 +445,7 @@
 	#func m_labelFrame m_labelFrame 6
 	#func m_setBackground m_setBackground 0
 	#func m_setRate m_setRate float
-	#func m_setDimension m_setDimension float, float
+	#func m_setDimension m_setDimension float,float
 	#func m_setFrames m_setFrames 0
 	#func m_streamMp3 m_streamMp3 6
 	#func m_streamMp3_buf m_streamMp3_buf 1
@@ -482,7 +482,7 @@
 	#func s_getPenY s_getPenY 1
 	#func s_getPen s_getPen $202
 	#func s_newStyles s_newStyles 0
-	#func s_loadPdr s_loadPdr 6
+	#func s_loadPdr s_loadPdr $202
 
 ;SWFDisplayitem
 	#func i_moveTo i_moveTo float,float
@@ -630,28 +630,28 @@
 
 	#module
 
-	#deffunc s_drawCubicTo int bx,int by,int cx,int cy,int dx,int dy
+	#deffunc s_drawCubicTo double bx,double by,double cx,double cy,double dx,double dy
 
 	_s_drawCubicTo@ dx,dy
 	_s_drawCubicTo@ bx,by,cx,cy
 
 	return
 
-	#deffunc s_drawCubic int bx,int by,int cx,int cy,int dx,int dy
+	#deffunc s_drawCubic double bx,double by,double cx,double cy,double dx,double dy
 
 	_s_drawCubic@ dx,dy
 	_s_drawCubic@ bx,by,cx,cy
 
 	return
 
-	#deffunc i_setMatrix int a,int b,int c,int d,int x,int y
+	#deffunc i_setMatrix double a,double b,double c,double d,double x,double y
 
 	_i_setMatrix@ x,y
 	_i_setMatrix@ a,b,c,d
 
 	return
 
-	#deffunc g_addEntry int ratio,int r,int g,int b,int a
+	#deffunc g_addEntry double ratio,int r,int g,int b,int a
 
 	_g_addEntry@ ratio,a
 	_g_addEntry@ ratio,r,g,b

@@ -28,7 +28,7 @@
 	;bsave "pdrtest.pdr",p,strlen(p)
 
 	SWFShape s
-	;s_loadPdr "pdrtest.pdr",1	;モーフィングのときは第二パラメータを必ず0以外にする
+	;s_loadPdr "pdrtest.pdr",PDR_MORPH	;モーフィングのときは第二パラメータをPDR_MORPHに
 	s_loadPdr p,0,strlen(p)
 	w=stat & 0xffff				;PDRファイルの幅
 	h=(stat >> 16) & 0xefff		;PDRファイルの高さ

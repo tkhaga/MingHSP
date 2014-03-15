@@ -29,8 +29,9 @@ EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 	alpha = hei->HspFunc_prm_getdi(0xff);
 	level = hei->HspFunc_prm_getdi(9);
 
-	if (level < 1 || level > 9 || alpha < 0 || alpha > 0xff)
+	if (level < 1 || level > 9 || alpha < 0 || alpha > 0xff) {
 		return -1;
+	}
 
 	if (alpha == 0xff) {
 		hasalpha = 1;
@@ -39,8 +40,9 @@ EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 		hasalpha = 2;
 	}
 
-	if (bm->palmode)
+	if (bm->palmode) {
 		pals = bm->pals;
+	}
 
 	if (pals) {
 		tmpwidth = alwidth = (bm->sx + 3) & ~3;
@@ -124,11 +126,13 @@ EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 	}
 
 	outdata = malloc(tmpsize);
-	if (!outdata)
+	if (!outdata) {
 		return -2;
+	}
 
-	if (compress2(outdata, &outsize, tmpbuf, tmpsize, level) != Z_OK)
+	if (compress2(outdata, &outsize, tmpbuf, tmpsize, level) != Z_OK) {
 		return -3;
+	}
 
 	if (pals) {
 		lhsize = 6;
@@ -162,11 +166,13 @@ EXPORT BOOL WINAPI vram2dbl(HSPEXINFO *hei, int p1, int p2, int p3)
 	fputc(bm->sy & 0xff, dbl);
 	fputc((bm->sy >> 8) & 0xff, dbl);
 
-	if (pals)
+	if (pals) {
 		fputc(pals - 1, dbl);	/* パレットモード時の色数 */
+	}
 
-	if(fwrite(outdata, sizeof(char), outsize, dbl) != outsize)
+	if(fwrite(outdata, sizeof(char), outsize, dbl) != outsize) {
 		return -5;
+	}
 
 	fclose(dbl);
 	free(outdata);
@@ -357,38 +363,42 @@ void writeADPCMData(SWFInput input, int bits16, int stereo, int sample_count, SW
 
 WAV_INFO readWAVheader(SWFInput input)
 {
-  WAV_INFO info;
-  unsigned long i;
+	WAV_INFO info;
+	unsigned long i;
 
-  i = (SWFInput_getUInt32(input) != 0x46464952);  /* "RIFF" */
-  SWFInput_seek(input, 4, SEEK_CUR);
-  i = (SWFInput_getUInt32(input) != 0x45564157);  /* "WAVE" */
-  if (!i)
-  {
-    if (SWFInput_getUInt32(input) != 0x20746d66)  /* "fmt " */
-      goto notwave;
-    i = SWFInput_getUInt32(input);
-    info.format = SWFInput_getUInt16(input);
-    info.channels = SWFInput_getUInt16(input);
-    info.srate = SWFInput_getUInt32(input);
-    SWFInput_seek(input, 6, SEEK_CUR);
-    info.bits = SWFInput_getUInt16(input);
-    SWFInput_seek(input, i - 16, SEEK_CUR);
-    if (SWFInput_getUInt32(input) == 0x74636166)
-    {
-      SWFInput_seek(input, 8, SEEK_CUR);
-    }else{
-      SWFInput_seek(input, -4, SEEK_CUR);
-    }
-    if (SWFInput_getUInt32(input) != 0x61746164)  /* "data" */
-      goto notwave;
-    info.datasize = SWFInput_getUInt32(input);
-  }else{
+	i = (SWFInput_getUInt32(input) != 0x46464952);	/* "RIFF" */
+	SWFInput_seek(input, 4, SEEK_CUR);
+	i = (SWFInput_getUInt32(input) != 0x45564157);	/* "WAVE" */
+	if (!i)
+	{
+		if (SWFInput_getUInt32(input) != 0x20746d66) {	/* "fmt " */
+			goto notwave;
+		}
+		i = SWFInput_getUInt32(input);
+		info.format = SWFInput_getUInt16(input);
+		info.channels = SWFInput_getUInt16(input);
+		info.srate = SWFInput_getUInt32(input);
+		SWFInput_seek(input, 6, SEEK_CUR);
+		info.bits = SWFInput_getUInt16(input);
+		SWFInput_seek(input, i - 16, SEEK_CUR);
+		if (SWFInput_getUInt32(input) == 0x74636166)
+		{
+			SWFInput_seek(input, 8, SEEK_CUR);
+		}
+		else {
+			SWFInput_seek(input, -4, SEEK_CUR);
+		}
+		if (SWFInput_getUInt32(input) != 0x61746164) {	/* "data" */
+			goto notwave;
+		}
+		info.datasize = SWFInput_getUInt32(input);
+	}
+	else {
 notwave:
-    info.datasize = 0;
-  }
+		info.datasize = 0;
+	}
 
-  return info;
+return info;
 }
 
 EXPORT BOOL WINAPI wav2adpcm(HSPEXINFO *hei, int p1, int p2, int p3)
@@ -460,57 +470,58 @@ EXPORT BOOL WINAPI wav2adpcm(HSPEXINFO *hei, int p1, int p2, int p3)
 
 EXPORT BOOL WINAPI getwavinfo(HSPEXINFO *hei, int p1, int p2, int p3)
 {
-  char flag = 0;
-  unsigned int *p;
-  double length;
-  FILE *fp;
-  SWFInput input;
-  WAV_INFO wav;
-  PVAL2 *pv;
+	char flag = 0;
+	unsigned int *p;
+	FILE *fp;
+	SWFInput input;
+	WAV_INFO wav;
 
-  p = (unsigned int*)hei->HspFunc_prm_getv();
-  pv = *hei->pval;
-  fp = fopen(hei->HspFunc_prm_gets(), "rb");
+	p = (unsigned int*)hei->HspFunc_prm_getv();
+	if ((*hei->pval)->flag != 4 || (*hei->pval)->len[1] < 6) {
+		return -2;
+	}
 
-  if (!fp)
-    return -1;
+	fp = fopen(hei->HspFunc_prm_gets(), "rb");
 
-  input = newSWFInput_file(fp);
+	if (!fp) {
+		return -1;
+	}
 
-  wav = readWAVheader(input);
+	input = newSWFInput_file(fp);
 
-  fclose(fp);
+	wav = readWAVheader(input);
 
-  if (pv->flag != 4 || pv->len[1] < 6)
-    return -2;
+	fclose(fp);
 
-  p[0] = wav.datasize / (wav.channels * wav.srate * (wav.bits / 8));
-  p[1] = wav.channels;
-  p[2] = wav.format;
-  p[3] = wav.srate;
-  p[4] = wav.bits;
-  p[5] = wav.datasize;
+	p[0] = wav.datasize / (wav.channels * wav.srate * (wav.bits / 8));
+	p[1] = wav.channels;
+	p[2] = wav.format;
+	p[3] = wav.srate;
+	p[4] = wav.bits;
+	p[5] = wav.datasize;
 
-  if (wav.channels == 2)
-    flag |= 1;
+	if (wav.channels == 2) {
+		flag |= 1;
+	}
 
-  switch (wav.srate)
-  {
-    case 11025:
-      flag |= 4;
-      break;
-    case 22050:
-      flag |= 8;
-      break;
-    case 44100:
-      flag |= 12;
-      break;
-    default:
-      break;
-  }
+	switch (wav.srate)
+	{
+	case 11025:
+		flag |= 4;
+		break;
+	case 22050:
+		flag |= 8;
+		break;
+	case 44100:
+		flag |= 12;
+		break;
+	default:
+		break;
+	}
 
-  if (wav.bits == 16)
-    flag |= 2;
+	if (wav.bits == 16) {
+		flag |= 2;
+	}
 
-  return -flag;
+	return -flag;
 }

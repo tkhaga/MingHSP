@@ -8,7 +8,6 @@
 #include <string.h>
 #include <math.h>
 
-/* Mingの低レベルAPIを用いることで誤差を小さくできる */
 #include "blocks/shape.h"
 #include "blocks/matrix.h"
 #include "blocks/block.h"
@@ -16,12 +15,86 @@
 
 #include "pdr.h"
 
-static int pdrlimit;	/* 読み込める残りのバイト数   */
-static int pdreol;		/* 0でないとき行末            */
-static int pdrerror;	/* 0でないときエラーが存在    */
+#if !defined(SWFFILL_LINEAR_GRADIENT) || !defined(SWFFILL_RADIAL_GRADIENT)
+#define MING_02A
+#endif
+
+#ifdef MING_02A
+#define SWFFILL_LINEAR_GRADIENT 0x10
+#define SWFFILL_RADIAL_GRADIENT 0x12
+extern float Ming_scale;
+void SWFShape_hideLine(SWFShape shape);
+#else
+float Ming_getScale();
+#endif
+
+void SWFShape_newStyles(SWFShape shape);
+
+#define LINEMAX_INC     256
+#define LINEMAX_DEFAULT 255
+
+typedef struct {
+	int flgAnchor;
+	int x, y;
+} ANCHOR;
+
+typedef struct {
+	byte flgClosePath;
+	int LineWidth, LineMode, LineColor, FillMode, FillColor;
+	int GradCenterX, GradCenterY, GradAngle, GradColor;
+	double GradRatio;
+	byte flgCompounded;
+	int CompoID;
+	int NumAnc;
+	byte processed;
+	ANCHOR *anchor;
+} PATH;
+
+typedef struct {
+	int max;
+	PATH *path;
+} PATHLIST;
+
+typedef struct {
+	/* 複合パスのID */
+	int compoid;
+	/* 複合パスに関連付けられる塗り情報のあるパス番号 */
+	int fillid;
+	int numpath;
+	/* 複合パスに関連付けられるパス番号の配列 */
+	int *pathlist;
+} COMPO;
+
+typedef struct {
+	int max;
+	int pathid;
+	int index;
+	COMPO *compo;
+} COMPOLIST;
+
+typedef struct {
+	int NumPath;
+	int ClipX, ClipY;
+	int flgmorph;
+	int ispdclip;
+	int linemax;
+	int *rect;
+	char *linebuf;
+	void **src;
+	SWFShape shape;
+	PATHLIST pathlist;
+	COMPOLIST compolist;
+} PDR;
+
+typedef int (* GETCHAR)(void **);
+typedef void (* FREELINE)(char *, void *);
 
 static GETCHAR GetChar;
 static FREELINE FreeLine;
+
+static int pdrlimit;	/* 読み込める残りのバイト数   */
+static int pdreol;		/* 0でないとき行末            */
+static int pdrerror;	/* 0でないときエラーが存在    */
 
 static int FindCompo(COMPOLIST *list, int key)
 {
@@ -612,10 +685,14 @@ static int PdrWriteShape(PDR *pdr)
 	return 0;
 }
 
-int SWFShape_loadPdr(SWFShape shape, int rect[], char *filename, int flag, int size)
+int SWFShape_loadPdr(SWFShape shape, int rect[], char *filename, int flag, int size, float orgX, float orgY)
 {
 	PDR pdr;
-
+#ifdef MING_02A
+	float scale = Ming_scale;
+#else
+	float scale = Ming_getScale();
+#endif
 	pdreol   = 0;
 	pdrerror = 0;
 
@@ -668,6 +745,9 @@ int SWFShape_loadPdr(SWFShape shape, int rect[], char *filename, int flag, int s
 		pdr.ClipY = 0;
 	}
 
+	pdr.ClipX += orgX * scale;
+	pdr.ClipY += orgY * scale;
+
 	/* 複合パスの情報を管理する。要素数は高々NumPath個 */
 	pdr.compolist.max = 0;
 	pdr.compolist.pathid = -1;
@@ -695,8 +775,8 @@ int SWFShape_loadPdr(SWFShape shape, int rect[], char *filename, int flag, int s
 	FreePdr(&pdr);
 
 	if (pdr.ispdclip != 0) {
-		rect[0] = SWFCharacter_getScaledWidth(CHARACTER(pdr.shape))  / 20.0;
-		rect[1] = SWFCharacter_getScaledHeight(CHARACTER(pdr.shape)) / 20.0;
+		rect[0] = SWFCharacter_getScaledWidth(CHARACTER(pdr.shape))  / scale;
+		rect[1] = SWFCharacter_getScaledHeight(CHARACTER(pdr.shape)) / scale;
 		if (flag & PDR_GETRECTONLY) {
 #ifdef MING_02A
 			destroySWFShape(BLOCK(pdr.shape));

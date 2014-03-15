@@ -1,4 +1,20 @@
-ver.1.0 beta11 (06/07/10)
+ver1.0 beta11.1 (06/07/10)
+
+  --全体--
+    ・実際にMingHSPを使用したソフトを配布する場合に行わなければならない事を
+      具体的に書きました
+
+  --MingHSP--
+    ・s_loadPdr命令でPDR上の座標を指定してそこをSWFShapeオブジェクトにおける
+      原点にできるようにした
+    ・s_loadPdr命令でming_setScaleで設定した値を考慮するようにした
+    ・minghsp.asのバグによりHSP3でs_drawCubicTo, s_drawCubic, i_setMatrix, 
+      g_addEntryが正常に動作していなかったのを修正
+
+  --mingdc--
+    ・細かい変更
+
+ver1.0 beta11 (06/07/10)
 
   --全体--
     ・ディレクトリ構成がちょっと変わりました
