@@ -1,6 +1,6 @@
 1 VERSIONINFO
-FILEVERSION 0,9,11,1
-PRODUCTVERSION 0,9,11,1
+FILEVERSION 0,9,11,2
+PRODUCTVERSION 0,9,11,2
 FILEOS 0x4
 FILETYPE 0x1
 {
@@ -8,17 +8,20 @@ FILETYPE 0x1
  {
   BLOCK "041103A4"
   {
-   VALUE "Comments", "This contains the Ming library which is licenced under the LGPL version 2.1 or later"
+   VALUE "Comments", "This contains ""Ming"" and ""aclib"" which are licenced under the LGPL version 2.1 or later.\r\n\r\n"
+"Ming\r\nCopyright (C) 2002  Opaque Industries - http://www.opaque.net/\r\n\r\n"
+"aclib\r\nCopyright (C) 2005-2006  Coa  - http://www.geocities.jp/coa9999\r\n"
+"Copyright (C) 2002  Opaque Industries - http://www.opaque.net/"
    VALUE "CompanyName", ""
    VALUE "FileDescription","MingHSP - Ming wrapper for HSP"
-   VALUE "FileVersion", "1.0 beta11"
+   VALUE "FileVersion", "1.0 beta11.1"
    VALUE "InternalName", "minghsp"
    VALUE "LegalCopyright","Copyright (C) 2003-2006 THAGA"
    VALUE "LegalTrademarks", ""
    VALUE "OriginalFilename", "minghsp.hpi"
    VALUE "PrivateBuild", ""
    VALUE "ProductName", "MingHSP"
-   VALUE "ProductVersion", "1.0 beta11"
+   VALUE "ProductVersion", "1.0 beta11.1"
    VALUE "SpecialBuild", ""
   }
  }

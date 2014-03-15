@@ -12,6 +12,7 @@
 #else
 #include "ming.h"
 #endif
+#include "pdr.h"
 #include "formats.h"
 #include "toutf8.h"
 #include "hspdll.h"
@@ -39,7 +40,6 @@ void destroySWFPrebuiltClip(SWFPrebuiltClip clip);
 #endif
 
 void SWFShape_newStyles(SWFShape shape);
-int SWFShape_loadPdr(SWFShape shape, int rect[], char *filename, int flag, int size);
 SWFAction SWFAction_load(unsigned char *obj);
 int SWFAction_save(unsigned char *obj, int objsize, SWFAction action);
 
@@ -682,14 +682,22 @@ EXPORT BOOL WINAPI s_drawCubic(float bx, float by, float cx, float cy)
 	return 0;
 }
 
-EXPORT BOOL WINAPI s_loadPdr(int p1, char *filename, int flag, int size)
+EXPORT BOOL WINAPI s_loadPdr(HSPEXINFO *hei, int p2, int p3, int p4)
 {
 	int rect[2];
+	int flag, size, orgX, orgY;
 	int ret;
+	char *filename;
 
 	lstrcpy(funcname, "s_loadPdr");
 
-	if (SWFShape_loadPdr(mhsp_shape, rect, filename, flag, size)) {
+	filename = hei->HspFunc_prm_gets();
+	flag = hei->HspFunc_prm_getdi(0);
+	size = hei->HspFunc_prm_getdi(0);
+	orgX = hei->HspFunc_prm_getdi(0);
+	orgY = hei->HspFunc_prm_getdi(0);
+
+	if (SWFShape_loadPdr(mhsp_shape, rect, filename, flag, size, orgX, orgY)) {
 		ret = 0;
 	}
 	else {

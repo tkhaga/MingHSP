@@ -574,14 +574,14 @@ f1,f2  直線を引く先の相対座標
 f1,f2  曲線を引く先の相対座標
 f3,f4  制御点の相対座標
 
-
 二次ベジエ曲線を引きます
 
-・s_loadPdr "s1", n2, n3
+・s_loadPdr "s1", n2, n3, n4, n5
 
 s1  PDRファイル名もしくはPDRデータが入った変数
 n2  フラグ
 n3  s1がPDRデータの場合はそのサイズを指定
+n4,n5  SWFShapeオブジェクトの原点のPDR上での座標
 
 選択されたSWFShapeオブジェクトに対して、s1に指定したPDRに従って描画を行います。
 対応するPDRはPDR Ver0.1, Ver0.2およびPDCLIP Ver0.2です。
@@ -606,6 +606,8 @@ PDCLIP形式を読み込む場合、通常はその幅と高さはそれを表現できる最小限のサイズにな
 複数同時に指定するには
 s_loadPdr "test.pdr",PDR_MORPH | PDR_GETRECTONLY
 のように"|"演算子で連結してください。
+
+n4,n5で指定したPDR上の座標がSWFShapeオブジェクトの原点になります
 
 ・s_newStyles
 
