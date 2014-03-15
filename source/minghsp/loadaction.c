@@ -1,10 +1,9 @@
 /*
     MingHSP - Ming wrapper for HSP
-    THAGA http://www.h5.dion.ne.jp/~markent/
+    Copyright (C) 2003-2006 THAGA http://www.h5.dion.ne.jp/~markent/
 */
 
 #include <windows.h>
-#include <stdio.h>
 
 #include "blocks/output.h"
 #include "blocks/action.h"
@@ -16,97 +15,48 @@
 #define EXPORT __declspec(dllexport)
 
 extern char funcname[];
-extern int SWF_versionNum;
+extern int idx, bufsize;
 
-#ifndef JAMING
-extern char* ErrorString;
-extern char* WarnString;
-
-extern void (*SWF_warn)(const char *msg, ...);
-extern void (*SWF_error)(const char *msg, ...);
-
-extern void warn_default(const char *msg, ...);
-extern void error_default(const char *msg, ...);
-
-char* strmirror(char** form,const char* str);
-char* strplus(char** form,const char* latt);
-
-void print_error(const char*format,...);
-void print_warn(const char*format,...);
-#endif
+void mhsp_method(byte b, byte *data);
 
 EXPORT BOOL WINAPI SWFAction_load(HSPEXINFO *hei, int p2, int p3, int p4)
 {
-	char *obj;
+	unsigned char *obj;
+	unsigned long length;
 	SWFOutput output;
 	SWFAction *p1;
 	lstrcpy(funcname, "SWFAction_load");
 	p1 = (SWFAction *)hei->HspFunc_prm_getv();
-	obj = (char *)hei->HspFunc_prm_getv();
+	obj = (unsigned char *)hei->HspFunc_prm_getv();
+	length = ((unsigned long)obj[0]      ) + ((unsigned long)obj[1] <<  8) +
+	         ((unsigned long)obj[2] << 16) + ((unsigned long)obj[3] << 24);
 	output = newSWFOutput();
-	SWFOutput_writeBuffer(output, obj + sizeof(long), *(long *)obj);
+	SWFOutput_writeBuffer(output, obj + sizeof(unsigned long), length);
 	SWFOutput_writeUInt8(output, SWFACTION_END);
 	*p1 = newSWFAction_fromOutput(output);
 	return 0;
 }
 
-EXPORT BOOL WINAPI SWFAction_save(long *p1, char *script, int p3, int p4)
+EXPORT BOOL WINAPI SWFAction_save(unsigned char *p1, int p2, SWFAction action, int p4)
 {
-	Buffer b;
-	long blength;
-
-	strcpy(funcname, "SWFAction_save");
-
-#ifndef JAMING
-	SWF_error = print_error;
-	SWF_warn = print_warn;
-
-	ErrorString = strmirror(&ErrorString,"");
-	WarnString = strmirror(&WarnString,"");
+	unsigned long length;
+	SWFOutput output;
+	lstrcpy(funcname, "SWFAction_save");
+#ifdef JAMING
+	output = action->output;
+	length = SWFOutput_length(output);
+#else
+	output = SWFOutputBlock_getOutput(action);
+	length = SWFOutputBlock_getLength(action);
 #endif
-
-  /* yydebug = 1; */
-
-	if(SWF_versionNum == 4)
-	{
-		swf4ParseInit(script, 0);
-
-		if(swf4parse((void *)&b) != 0)
-		{
-#ifndef JAMING
-			SWF_error = error_default;
-			SWF_warn = warn_default;
-#endif
-			return -1;
-		}
-	}
-	else
-	{
-		swf5ParseInit(script, 0);
-
-		if(swf5parse((void *)&b) != 0)
-		{
-#ifndef JAMING
-			SWF_error = error_default;
-			SWF_warn = warn_default;
-#endif
-			return -1;
-		}
-	}
-
-#ifndef JAMING
-	SWF_error = error_default;
-	SWF_warn = warn_default;
-#endif
-
-    blength = bufferLength(b);
-    if (blength > p3)
-    {
-		destroyBuffer(b);
-    	return -2;
-    }
-    *p1 = blength;
-    memcpy(p1 + 1, b->buffer, blength);
-	destroyBuffer(b);
-	return -(blength + sizeof(long));
+	if (length + sizeof(unsigned long) > p2)
+		return -(length + sizeof(unsigned long));
+	p1[0] =  length        & 0xff;
+	p1[1] = (length >> 8)  & 0xff;
+	p1[2] = (length >> 16) & 0xff;
+	p1[3] = (length >> 24) & 0xff;
+	idx = sizeof(unsigned long);
+	bufsize = p2;
+	SWFOutput_writeToMethod(output, (SWFByteOutputMethod)mhsp_method, p1);
+	return -(length + sizeof(unsigned long));
 }

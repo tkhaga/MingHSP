@@ -36,11 +36,11 @@
 extern char* ErrorString;
 extern char* WarnString;
 
-extern void (*SWF_warn)(const char *msg, ...);
 extern void (*SWF_error)(const char *msg, ...);
+extern void (*SWF_warn)(const char *msg, ...);
 
-extern void warn_default(const char *msg, ...);
-extern void error_default(const char *msg, ...);
+void mhsp_error(const char*msg,...);
+void mhsp_warn(const char *msg,...);
 
 char* strmirror(char** form,const char* str)
 {
@@ -115,8 +115,8 @@ SWFAction compileSWFActionCode(const char *script)
 
 		if(swf4parse((void *)&b) != 0)
 		{
-			SWF_error = error_default;
-			SWF_warn = warn_default;
+			SWF_error = mhsp_error;
+			SWF_warn = mhsp_warn;
 			return NULL;
 		}
 	}
@@ -126,14 +126,14 @@ SWFAction compileSWFActionCode(const char *script)
 
 		if(swf5parse((void *)&b) != 0)
 		{
-			SWF_error = error_default;
-			SWF_warn = warn_default;
+			SWF_error = mhsp_error;
+			SWF_warn = mhsp_warn;
 			return NULL;
 		}
 	}
 
-	SWF_error = error_default;
-	SWF_warn = warn_default;
+	SWF_error = mhsp_error;
+	SWF_warn = mhsp_warn;
 
 	output = newSWFOutput();
 
