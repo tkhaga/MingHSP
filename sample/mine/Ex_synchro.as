@@ -61,7 +61,7 @@ stop
 	t_moveTo x,y					;書き始めのy値を高さ分ずらす。
 	t_addString sub_txt
 	m_add i,txt					;先に定義した図形"s"をムービーに"i"として追加
-	mhsp_seldisplayitem i				;i_...の対象を"i"とする
+	sel_i i						;i_...の対象を"i"とする
 	mhsp_float x,sub_x				;テキストの0,0のポジションは、
 	mhsp_float y,sub_y				;x軸はテキストの中央、y軸は下端なので
 	i_moveTo x,y					;

@@ -1,0 +1,4 @@
+EXPORTS
+_vram2dbl@16            =vram2dbl@16
+_wav2adpcm@16		=wav2adpcm@16
+_getwavinfo@16		=getwavinfo@16

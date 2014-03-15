@@ -249,7 +249,7 @@ SWFSound newSWFSound(FILE *f, byte flags)
 }
 SWFSound newSWFSound_fromInput(SWFInput input, byte flags)
 {
-  unsigned long valid = 0;
+  unsigned long valid;
   SWFSound sound = calloc(1, SWFSOUND_SIZE);
   SWFBlock block = (SWFBlock)sound;
 
@@ -264,12 +264,12 @@ SWFSound newSWFSound_fromInput(SWFInput input, byte flags)
   sound->input = input;
   sound->flags = flags;
 
-/* read RIFF WAVE header */
+/* read RIFF WAVE header - THAGA */
   /* "RIFF" */
   valid = (SWFInput_getUInt32(input) != 0x46464952);
   SWFInput_seek(input, 4, SEEK_CUR);
   /* "WAVE" */
-  valid = (SWFInput_getUInt32(input) != 0x45564157);
+  valid += (SWFInput_getUInt32(input) != 0x45564157);
   if (valid == 0)
   {
     byte flags2 = 0;

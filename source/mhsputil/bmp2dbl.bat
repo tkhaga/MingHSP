@@ -1,0 +1,1 @@
+gcc -s -o bmp2dbl.exe bmp2dbl.c mhsputil.c -lz -Os

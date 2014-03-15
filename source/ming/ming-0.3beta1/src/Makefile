@@ -1,12 +1,24 @@
-
 #CC = gcc -g -pg -a	# profiling flags
 #CC = gcc -O5
-CC = gcc -g -Wall -DJAMING
+CC = gcc -O2 -Wall -I. ${CFLAGS} #-fPIC -ggdb
+LDFLAGS = -lm -lz # -ldmalloc
 
 LIBDIR = /usr/local/lib
 
-OFILES = movie.o displaylist.o blocklist.o position.o movieclip.o \
-	 shape_util.o shape_cubic.o text_util.o fill.o ming.o
+include ../config.make
+
+OFILES = \
+	blocklist.o \
+	displaylist.o \
+	fill.o \
+	font_util.o \
+	ming.o \
+	movie.o \
+	movieclip.o \
+	position.o \
+	shape_cubic.o \
+	shape_util.o \
+	text_util.o
 
 COMPILEROFILES = actioncompiler/compile.o \
 		 actioncompiler/swf4compiler.tab.o \
@@ -16,20 +28,21 @@ COMPILEROFILES = actioncompiler/compile.o \
 		 actioncompiler/compileaction.o \
 		 actioncompiler/assembler.o
 
-MHSP = loadaction.o minghsp.o utf8.o formats.o
+MHSP = loadaction.o minghsp.o toutf8.o formats.o
 
 all: minghsp
 
+# saveFP and restFP on OS X can be retrieved as such:
+# ar -x /usr/lib/libcc_dynamic.a lib/macosx-fpsave.o
+
 minghsp: ${OFILES} ${MHSP}
-	cd .. && make install-static
-	dllwrap --def minghsp.def -s -o minghsp.hpi ${MHSP} -lming
-	rm libming.a
+	cd .. && make static
+	dllwrap --def minghsp.def -s -o minghsp.hpi ${MHSP} libming.a -lungif -lpng -lz
 
 dynamic: ${OFILES}
 	cd blocks && make
 	cd actioncompiler && make
-	${CC} ${OFILES} ${COMPILEROFILES} blocks/*.o -shared -fpic \
-	  -o libming.so
+	${CC} ${OFILES} ${COMPILEROFILES} ${LDFLAGS} ${EXTRA_LIBS} blocks/*.o -shared -o libming.so
 	cp libming.so ..
 
 static: ${OFILES}
@@ -44,15 +57,9 @@ clean:
 	cd actioncompiler && make clean
 	rm -f *.o libming.a libming.so test test.exe core *.core
 
-distclean: clean
-	rm -f actioncompiler/lex.swf4.c
-	rm -f actioncompiler/lex.swf5.c
-	rm -f actioncompiler/swf4compiler.tab.c
-	rm -f actioncompiler/swf5compiler.tab.c
-
 # breaks on bsd:
 #.c.o: .c .h
 #	${CC} ${FLAGS} -c $<
 
 test: static test.o
-	${CC} -o test test.o libming.a -lm
+	${CC} -o test test.o libming.a  ${EXTRA_LIBS} ${LDFLAGS}
