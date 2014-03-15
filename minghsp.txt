@@ -1,4 +1,4 @@
-MingHSP ver.1.0 beta 8 (06/01/01)
+MingHSP ver.1.0 beta 9 (06/01/04)
 ※これはまだベータ版なので仕様は予告無く変更されることがあります
 
   作者
@@ -10,7 +10,7 @@ MingHSP ver.1.0 beta 8 (06/01/01)
 
   ＠概要
 
-    これはOpaque Industriesの開発したFlash出力ライブラリ、Ming 0.3 beta 1をTHAGAがHSPプラグイン化したものです。旧バージョンのMing 0.2aをgoto氏がサウンド対応やマルチバイト文字対応という改良をしたJaMingを使用したものも同梱しています。HSP 2.6以降専用です
+    これはOpaque Industriesの開発したフリーのFlash出力ライブラリ、Ming 0.3 beta 1をTHAGAがHSPプラグイン化したものです。旧バージョンのMing 0.2aをgoto氏がサウンド対応やマルチバイト文字対応という改良をしたJaMingを使用したものも同梱しています。HSP 2.6以降専用です
 
     マニュアルはまだありません。とりあえずminghsp.hpi,minghsp.as,mingtest.asをHSPのフォルダに入れてmingtest.asを実行してください。test.swfというファイルが出力されます。これはJaMingの公式サイトにあるblink.swfと同じものです
 
@@ -25,7 +25,7 @@ MingHSP ver.1.0 beta 8 (06/01/01)
     と書いてください。他に必要なスクリプトやプラグインはありません
     HSP3ではminghsp.asの代わりにminghsp3.asを使ってください
 
-  まだマニュアルなどが出来ておらず、現在は分かる人だけが使ってくださいという状態です。ご了承下さい。
+    まだマニュアルなどが出来ておらず、現在はMingを使ったことがあって、どの命令がMingのどの命令に対応しているかが分かる人だけが使ってくださいという状態です。ご了承下さい。
 
   ＠アーカイブ構成
 
@@ -56,7 +56,7 @@ MingHSP ver.1.0 beta 8 (06/01/01)
     gif2dbl.exe          (GIF形式画像ファイルをMingで読み込めるDBL形式に変換するMing付属ツール)
     sample               (MingHSPを使用したサンプル)
     └mingtest.as        (四角形が点滅しながら回転する。goto氏のblink.phpのMingHSP版)
-      mingtest.hsp       (上のHSP 3.0対応版)
+      mingtest3.hsp      (上のHSP 3.0対応版)
       tutorial1.as       (manual.txtのチュートリアル用スクリプト)
       tutorial1.hsp      (上のHSP 3.0対応版)
       tutorial2.as
@@ -83,7 +83,6 @@ MingHSP ver.1.0 beta 8 (06/01/01)
             blocks
             └
             (上書き)
-              error.c
               sound.c
         ming-0.3beta1
         └src
@@ -98,7 +97,6 @@ MingHSP ver.1.0 beta 8 (06/01/01)
             blocks
             └
             (上書き)
-              error.c
               sound.c
       libungif
       └dgif_lib.c         (libungif 4.1.4に対する差分)
@@ -127,7 +125,7 @@ MingHSP ver.1.0 beta 8 (06/01/01)
         png2dbl.bat
         gif2dbl.bat
       (上書き)
-        png2dbl.c          (CVSから取って来たやつ)
+        png2dbl.c          (MingのCVSから取って来たやつ)
         gif2dbl.c
 
   ＠注意
@@ -247,8 +245,8 @@ BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力します
 
   ＠命令一覧
 
-    minghsp.hpi命令総数:197 (Ming 0.3 beta 1ベース)
-    minghspj.hpi命令総数:157 (Jaming-0.1.5ベース)
+    minghsp.hpi  (Ming 0.3 beta 1ベース) 命令総数:198
+    minghspj.hpi (Jaming-0.1.5ベース)    命令総数:158
     Ming 0.3 beta 1版にのみある命令には*, Ming 0.3 beta 1版で仕様が違う命令には+, Ming 0.3 beta 1版で挙動が変わっている(把握している範囲で)命令には!が付いています。
     Ming 0.3 beta 1版では削除されている命令は()でくくられています
 
@@ -291,11 +289,12 @@ BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力します
         mhsp_setwarnbuf
         mhsp_getaswarn *
         mhsp_getaserror *
-        ming_setCubicThreshold
-        ming_setScale
-        ming_useSWFVersion !
-        swfbutton_keypress
-        ming_useConstants *
+        mhsp_init
+        Ming_setCubicThreshold
+        Ming_setScale
+        Ming_useSWFVersion !
+        SWFBUTTON_KEYPRESS
+        Ming_useConstants *
         SWFMovie
         m_save +
         m_add
@@ -319,7 +318,7 @@ BREAKTTC.EXEをパスの通ったところに置いてコマンドプロンプトで次のように入力します
         m_importFont *
         m_addExport *
         m_writeExports *
-        m_protect *
+        m_Protect *
         SWFShape
         s_setLine
         s_addSolidFill
@@ -496,11 +495,11 @@ d:/mingw/include /usr/include
 
     1.ソースのダウンロード
       http://ming.sourceforge.net/からMing 0.3 beta 1をダウンロードし、適当なフォルダに展開。Mingのディレクトリに、MingHSPの配布ファイル中のsource\ming\ming-0.3beta1以下を上書き
-      Coa氏のホームページ(http://www.geocities.jp/coa9999/)からaclibのソースをダウンロードし、sourceディレクトリのファイルをMingのsrc\actioncompilerに上書き、libming.c, libming.h,  ming.hを削除
-      JaMing版の場合はhttp://humming.dip.jp/からjaming-0.1.5をダウンロード。適当なフォルダに展開し、MingHSPの配布ファイルのsource\ming\jaming-0.1.5以下をjaming-0.1.5のフォルダに上書き
+      Coa氏のホームページ(http://www.geocities.jp/coa9999/)からaclibのソースをダウンロードし、sourceフォルダのファイルをMingのsrc\actioncompilerに上書き、libming.c, libming.h,  ming.hを削除
+      JaMing版の場合はhttp://humming.dip.jp/からjaming-0.1.5をダウンロード。適当なフォルダに展開し、MingHSPの配布ファイルのsource\ming\jaming-0.1.5以下をjaming-0.1.5のディレクトリに上書き
 
     2.bisonとflexのインストール
-      jaming-0.1.5版をビルドする場合にはbisonとflexをパスの通ったところか、jaming-0.1.5のsrc/actioncompilerフォルダに入れる必要があります。bisonは1.35を使ってください。http://hp.vector.co.jp/authors/VA029962/bison_flex_gnuwin32.zipをダウンロードして、展開した中身を全部jaming-0.1.5のsrc\actioncompilerフォルダに入れるのが一番楽です。
+      jaming-0.1.5版をビルドする場合にはbisonとflexをパスの通ったところか、jaming-0.1.5のsrc\actioncompilerディレクトリに入れる必要があります。bisonは1.35を使ってください。http://hp.vector.co.jp/authors/VA029962/bison_flex_gnuwin32.zipをダウンロードして、展開した中身を全部jaming-0.1.5のsrc\actioncompilerディレクトリに入れるのが一番楽です。
 
     3.MSYSからコンパイル
       MingHSPの配布ファイル中のsource\minghspフォルダの中身をMingのsrcディレクトリにコピーし、MSYSでこのディレクトリに移動しmakeを実行する。これでminghsp.hpiが得られる(JaMing版はminghspj.hpi)
@@ -522,18 +521,26 @@ d:/mingw/include /usr/include
     ・SWFtoHSPを作る?
 
   ＠謝辞
-    \sample\mine\フォルダのサンプルは、mine氏が提供してくださったものです
+    sample\mine\フォルダのサンプルは、mine氏が提供してくださったものです
     またmine氏にはバグを報告していただきました。本当にありがとうございます
 
   ＠ライセンス等
 
-    平たく言うとminghsp.hpi, minghspj.hpiを使用し、ほかのソフトと一緒に配布することには何の制限もありません。このアーカイブを完全に同一状態で再配布することも同様です。ただし個別のファイルについてライセンスが異なるので注意してください。以下に各ファイルのライセンスを示します。
+    0.平たく言うとminghsp.hpi, minghspj.hpiの使用および再配布は自由に行えます。
+      minghsp.hpi, minghspj.hpiはLGPL verion 2.1のMingライブラリを使用していますが、これら自体はLGPL version 2.1の第6節における"work that uses the Library"なのでLGPL version 2.1の適用外となります。
+      これらのライセンスについては第3節を参照してください(LGPL version 2.1より緩いライセンスです)。
 
-    source\ming以下の全ファイルはLGPL version 2.1です。詳しくは同封のLICENCE.TXT(英語)を参照してください。再配布する場合はライセンスも必ず同梱するようにしてください。
-    mingdc.dll, wav2adpcm.exe, gif2dbl.exe, png2dbl.exe, makefdb.exeおよびそのソースはライセンスが不明ですが、おそらくこれらもLGPL version 2.1とするべきでしょう。
-    minghsp.hpi, minghspj.hpi, bmp2dbl.exe, ifdbl.spiおよびそのソース(すでにほかのライセンスが適用されている部分を除く)は「川合堂ライセンス-01」とします。詳しくは同封のKL-01.txtを参照してください。なお、再配布の際にライセンス文のコピーを一緒に配布する必要はありません。
+    1.このアーカイブを完全に同一状態で再配布することには何の制限もありません。ただし個別のファイルについてライセンスが異なるので注意してください。
+      次節以降に各ファイルのライセンスを示します。
 
-    ttf2fft.exeは次のライセンスに基づいて再配布されています。以下に全文を引用します。再配布する場合はこのライセンスも必ず同梱するようにしてください。
+    2.source\ming以下の全ファイルおよびsource\minghsp\formats.c、mingdc.dll, wav2adpcm.exe, gif2dbl.exe, png2dbl.exe, makefdb.exeおよびそのソースはLGPL version 2.1です。再配布する場合はこれらのライセンスがLGPL version 2.1であることを明記し、LGPL version 2.1の複製(LICENCE.TXT)も必ず同梱するようにしてください。
+      プラグインとしての利用や実行ファイル呼び出しでの利用をしている限りではそのソフトはLGPL version 2.1は適用されません。しかしこれらを組み込んだソフトはLGPL version 2.1となります。詳しくは同封のLICENCE.TXT(英語)を参照してください。
+      なおこの解釈は正しいと信じていますが法的に有効では無いので注意してください。
+
+    3.minghsp.hpi, minghspj.hpiおよびこれらのMing部分以外のソース(minghsp.c, loadaction.c, toutf8.c, toutf8.h)とbmp2dbl.exe, ifdbl.spiおよびそのソースは「川合堂ライセンス-01」とします。詳しくは同封のKL-01.txtを参照してください。
+      なお、再配布の際にライセンス文の複製を一緒に配布する必要はありません。
+
+    4.ttf2fft.exeは次のライセンスに基づいて再配布されています。以下に全文を引用します。再配布する場合はこのライセンスも必ず同梱するようにしてください。
 
 //引用ここから
 

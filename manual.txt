@@ -233,11 +233,23 @@
     プルスクリプトはtutorial2.asです(HSP 3.0版はtutorial2.hsp)
 
   ・チュートリアル３
-    画像を使ってみる
+    画像ファイルを使ってみる
 
-      このチュートリアルではMingHSPで画像を扱う方法を解説したいと思います。
+      このチュートリアルではMingHSPで画像ファイルを扱う方法を解説したいと思い
+    ます。
 
-      画像を扱うには
+      画像ファイルをMingHSPで使うには、いったんDBLという形式に変換する必要が
+    あります。MingHSPには、BMP, PNG, GIFからDBL形式のファイルを作成する
+    ソフトが付属しています。bmp2dbl.exeはBMPファイルから、png2dbl.exeはPNG
+    ファイルから、gif2dbl.exeはGIFファイルからDBLファイルを作成します。それ
+    ぞれの実行ファイルにそれぞれの形式のファイルをドラッグ＆ドロップすれば
+    DBLファイルが作成されます(拡張子はDBL)。
+      このDBLファイルを使って、まずはSWFBitmapオブジェクトを作成します
+
+	SWFBitmap bitmap,"test.dbl"
+
+      DBLファイルの"test.dbl"からSWFBitmapオブジェクトを作成し、変数bitmapに
+    代入します。
 
 ＠ActionScriptかいせつもどき（まだできていません、読み飛ばしてください）
 
@@ -354,11 +366,11 @@ n1  オブジェクト
 
 s1のファイル名でSWFを保存します。実行するとstatにはそのサイズが代入されます
 
-  ・m_add v1,n2
+  ・m_add v1, n2
 
 p2のオブジェクトを現在のフレームに追加し、v1にそれに対応するSWFDisplayItemオブジェクトを代入します
 
-  ・m_output v1,n2
+  ・m_output v1, n2
 
 v1にSWFのデータを代入します。n2に出力される最大のサイズを入れてください
 当然ながらv1のサイズはn2で指定する以上である必要があります
@@ -372,7 +384,7 @@ v1にSWFのデータを代入します。n2に出力される最大のサイズを入れてください
 
 新しいフレームを作成し、そのフレームに移ります
 
-  ・m_setBackground n1,n2,n3
+  ・m_setBackground n1, n2, n3
 
 ムービーの背景色を(n1,n2,n3)に設定します
 
@@ -380,7 +392,7 @@ v1にSWFのデータを代入します。n2に出力される最大のサイズを入れてください
 
 １フレーム当たりの時間をf1秒に設定します
 
-  ・m_setDimension f1,f2
+  ・m_setDimension f1, f2
 
 f1,f2  キャンバスサイズ
 
@@ -397,8 +409,7 @@ s1のファイル名MP3を現在のフレームからストリーミング再生するようにします
   ・m_streamMp3_buf v1,n2
 
 m_streamMp3と同じですがv1にはMP3のデータを入れた変数を、n2にはそのサイズを指定してください
-
-  ・m_addSound v1,s2,n3
+  ・m_addSound v1,s2,n3 (minghspj.hpiのみ)
 
     v1  サウンドを示すSWFDisplayItemオブジェクトが代入される変数
     s2  サウンドファイル名
@@ -427,30 +438,30 @@ SWFSOUND_16BITS                           16
 SWFSOUND_MONO             モノラル。非指定時これ
 SWFSOUND_STEREO           ステレオ
 
-  ・m_addSound_buf v1,n2,n3
+  ・m_addSound_buf v1,n2,n3 (minghspj.hpiのみ)
 
-    v1  音声データの入っている変数＆サウンドを示すSWFDisplayItemオブジェクトが代入される変数
+    v1  音声データの入っている変数＆サウンドを示すSWFDisplayItemオブジェクトが代入される数値型変数
     n2  音声データのサイズ
     n3  サウンドのフラグ
 
 フラグは上と同じ
 
-  ・m_startSound n1
+  ・m_startSound n1 (minghspj.hpiのみ)
 
     n1  サウンドを示すSWFDisplayItemオブジェクト
 
 現在のフレームでイベントサウンドを鳴らします
 m_addSoundを実行したフレームの次のフレームで実行してください
 
-  ・m_stopSound n1
+  ・m_stopSound n1 (minghspj.hpiのみ)
 
     n1  サウンドを示すSWFDisplayItemオブジェクト
 
 現在鳴っているn1で示されるイベントサウンドの再生を止めます
 
-  ・m_setButtonSound v1,n2
+  ・m_setButtonSound v1, n2 (minghspj.hpiのみ)
 
-    v1  サウンドを示すSWFDisplayItemオブジェクトの配列
+    v1  サウンドを示すSWFDisplayItemオブジェクトの数値型配列
     n2  ボタンを示すSWFDisplayItemオブジェクト
 
 ボタンの各状態に対してイベントサウンドを割り当てます
@@ -462,11 +473,11 @@ v1.3  ？
 
   ・SWFShape v1
 
-v1  作成したSWFShapeオブジェクトを代入する変数
+v1  作成したSWFShapeオブジェクトを代入する数値型変数
 
 新しいSWFShapeオブジェクトを作成します。
 
-・s_setLine n1,n2,n3,n4,n5
+・s_setLine n1, n2, n3, n4, [n5]
 
   n1  線の太さ（整数）
   n2  線の色（赤成分）0～255
@@ -474,21 +485,21 @@ v1  作成したSWFShapeオブジェクトを代入する変数
   n4        （青成分）0～255
   n5        （透明度）0～255
 
-  選択されたSWFShapeオブジェクトでこれから引く線の太さと色を設定します
+  選択されたSWFShapeオブジェクトでこれから引く線の太さと色を設定します。n5を省略すると255が指定されたのと同じになります
 
-・s_addSolidFill v1,n2,n3,n4,n5
+・s_addSolidFill v1, n2, n3, n4, [n5]
 
-  v1  作成したSWFFillオブジェクトを代入する変数
+  v1  作成したSWFFillオブジェクトを代入する数値型変数
   n2  塗りつぶし色（赤成分）0～255
   n3              （緑成分）0～255
   n4              （青成分）0～255
   n5              （透明度）0～255
 
-  選択されたSWFShapeオブジェクトに対するSWFFillオブジェクトを作成します。s_addSolidFillでは色からSWFFillオブジェクトを作成します。
+  選択されたSWFShapeオブジェクトに対するSWFFillオブジェクトを作成します。s_addSolidFillでは色からSWFFillオブジェクトを作成します。n5を省略すると255が指定されたのと同じになります
 
-・s_addBitmapFill v1,n2,n3
+・s_addBitmapFill v1, n2, [n3]
 
-  v1  作成したSWFFillオブジェクトを代入する変数
+  v1  作成したSWFFillオブジェクトを代入する数値型変数
   n2  SWFBitmapオブジェクト
   n3  フラグ
 
@@ -496,18 +507,20 @@ v1  作成したSWFShapeオブジェクトを代入する変数
 SWFFILL_TILED_BITMAP
 タイル状に画像を配置する
 SWFFILL_CLIPPED_BITMAP
+省略時にはSWFFILL_TILED_BITMAPが指定されたのと同じになります
 
-・s_addGradientFill v1, n2, n3
+・s_addGradientFill v1, n2, [n3]
 
-v1  作成したSWFFillオブジェクトを代入する変数
+v1  作成したSWFFillオブジェクトを代入する数値型変数
 n2  SWFGradientオブジェクト
 n3  フラグ
 
-選択されたSWFShapeオブジェクトに対するSWFFillオブジェクトを作成します。s_addGradientFillではグラデーション（SWFGradientオブジェクト）からSWFFillオブジェクトを作成します。SWFGradientオブジェクトの作成はSWFGradient，g_addEntryで行います。p2で指定できるフラグには次のものがあります
+選択されたSWFShapeオブジェクトに対するSWFFillオブジェクトを作成します。s_addGradientFillではグラデーション（SWFGradientオブジェクト）からSWFFillオブジェクトを作成します。SWFGradientオブジェクトの作成はSWFGradient，g_addEntryで行います。n3で指定できるフラグには次のものがあります
 SWFFILL_LINEAR_GRADIENT
 線状のグラデーションを作成します
 SWFFILL_RADIAL_GRADIENT
 放射状のグラデーションを作成します
+省略時にはSWFFILL_LINEAR_GRADIENTが指定されたのと同じになります
 
 ・s_setLeftFill n1
 
@@ -517,32 +530,32 @@ n1  SWFFillオブジェクト
 
 n1  SWFFillオブジェクト
 
-・s_movePenTo f1,f2
+・s_movePenTo f1, f2
 
 f1,f2  描画基準点の移動先の座標
 
 選択されたSWFShapeオブジェクトでの描画基準点を移動します。
 相対座標の基点となります
 
-・s_movePen p1,p2
+・s_movePen f1, f2
 
 f1,f2  描画基準点の移動先の相対座標
 
 選択されたSWFShapeオブジェクトでの描画基準点を移動します。
 
-・s_drawLineTo f1,f2
+・s_drawLineTo f1, f2
 
 f1,f2  直線を引く先の絶対座標
 
 選択されたSWFShapeオブジェクトにおいてカレントポジションからs_setLine命令で指定した線の太さと色で、指定した座標に向かって直線を引きます。
 
-・s_drawLine f1,f2
+・s_drawLine f1, f2
 
 f1,f2  直線を引く先の相対座標
 
 選択されたSWFShapeオブジェクトにおいてカレントポジションからs_setLine命令で指定した線の太さと色で、指定したピクセル数分だけ直線を引きます。
 
-・s_drawCurveTo f1,f2,f3,f4
+・s_drawCurveTo f1, f2, f3, f4
 
 f1,f2  曲線を引く先の相対座標
 f3,f4  制御点の相対座標
@@ -550,25 +563,25 @@ f3,f4  制御点の相対座標
 
 二次ベジエ曲線を引きます
 
-・i_moveTo f1,f2
+・i_moveTo f1, f2
 
 f1,f2  オブジェクトを移動させる先の座標
 
 オブジェクトを移動します
 
-・i_move f1,f2
+・i_move f1, f2
 
 f1,f2  オブジェクトを移動させる先の現在の位置からの相対座標
 
 オブジェクトを移動します
 
-・i_scaleTo f1,f2
+・i_scaleTo f1, f2
 
 f1,f2  X方向、Y方向の拡大率(1fが100%)
 
 オブジェクト拡大縮小します
 
-・i_scale f1,f2
+・i_scale f1, f2
 
 f1,f2  X方向、Y方向の増加させる拡大率(1fが100%)
 
@@ -612,9 +625,9 @@ f1  現在の歪み度からの変化量
 
 ・i_setDepth n1
 
-n1  新しいZオーダー
+n1  オブジェクトの深度
 
-オブジェクトのZオーダーを設定します
+オブジェクトの深度を設定します。深度が大きい数字なほどそのオブジェクトは手前に表示されます。深度はマイナスの値をとることも出来ます。
 
 ・i_remove
 
@@ -633,7 +646,7 @@ f1  1.0が100%
 
 グラデーションやモーフィングでの変化の度合いを設定します
 
-・i_addColor n1,n2,n3,n4
+・i_addColor n1, n2, n3, n4
 
 n1, n2, n3, n4  加算する値。それぞれR,G,B,A
 
@@ -647,7 +660,7 @@ f1, f2, f3, f4  乗算する値。それぞれR,G,B,A
 
 ・SWFGradient v1
 
-v1  作成したSWFGradientオブジェクトを代入する変数
+v1  作成したSWFGradientオブジェクトを代入する数値型変数
 
 新しいSWFGradientオブジェクトを作成します
 
@@ -658,82 +671,87 @@ n2, n3, n4, n5  それぞれR, G, B, A
 
 グラデーションの制御点を登録します
 
-・SWFBitmap v1, s2, n3
+・SWFBitmap v1, s2, [s3]
 
-v1  作成したSWFBitmapオブジェクトを代入する変数
+v1  作成したSWFBitmapオブジェクトを代入する数値型変数
 s2  画像ファイル名
-n3  フラグ
+s3  アルファマスクファイル
 
 画像ファイルからSWFBitmapオブジェクトを作成します
 読み込める画像フォーマットはJPEG(プログレッシブJPEG不可)とMing独自形式のDBLです
-n3に1以上をいれるとファイルはJPEGのアルファチャンネルとみなされ、次にs2にJPEGファイル名を入れて
-実行することでアルファチャンネル付きJPEGのSWFBitmapオブジェクトが作成されます
+Ming 0.3 beta 1版では、PNGやGIFファイルも読み込むことが出来ます。
+s3にファイル名が指定されており、s2がJPEGファイルであるとアルファチャンネルとみなされ、アルファチャンネル付きJPEGのSWFBitmapオブジェクトが作成されます
 
 stat=1  ファイルが非対応のフォーマット
      2  ファイルを読み込めない
-     3  n3に1をいれた二回目の実行の時ファイルが読み込めない
 
-・SWFBitmap_buf v1, n2, n3
+・SWFBitmap_buf v1, v2, n3, v4, n5
 
-v1  画像ファイルのデータが入った変数＆作成したSWFBitmapオブジェクトを代入する変数
-n2  v1の変数に代入されるデータの最大サイズ
-n3  フラグ
+v1  作成したSWFBitmapオブジェクトを代入する数値型変数
+v2  画像ファイルのデータが入った変数
+n3  v2の変数に代入された画像データのサイズ
+v4  アルファマスクのデータが入った変数
+n5  v4の変数に代入されたアルファマスクデータのサイズ
 
-上と同様ですが、これは変数から画像データを読み込みます。SWFBitmapオブジェクトが作成されるとv1の変数に代入されます。そのまま使うと不都合があるのでほかの変数に移してから使ってください。
-n2で指定するサイズはv1に確保されているサイズ以上であってはいけません
+上と同様ですが、これは変数から画像データを読み込みます。SWFBitmapオブジェクトが作成されるとv1の変数に代入されます。
+アルファマスクを使わない場合もv4に変数を指定する必要があります。その時はn5を省略するか0を入れてください
 
 ・bmp_getWidth v1
 
-v1  SWFBitmapオブジェクトの横方向サイズが代入される変数
+v1  SWFBitmapオブジェクトの横方向サイズが代入される数値型変数
 
-SWFBitmapオブジェクトの横方向サイズを取得します
+SWFBitmapオブジェクトの横方向サイズを取得します。小数なのでmhsp_int命令で整数に変換してください
 
 ・bmp_getHeight v1
 
-v1  SWFBitmapオブジェクトの縦方向サイズが代入される変数
+v1  SWFBitmapオブジェクトの縦方向サイズが代入される数値型変数
 
-SWFBitmapオブジェクトの縦方向サイズを取得します
+SWFBitmapオブジェクトの縦方向サイズを取得します。小数なのでmhsp_int命令で整数に変換してください
 
-  ・mhsp_float v1,n2
+  ・mhsp_float v1, n2
 
     n2の整数を単精度浮動小数点数(float値)に変換し、v1に代入します
 
-  ・mhsp_add v1,f2,f3
+  ・mhsp_add v1, f2, f3
 f2,f3  足し合わせる数(float値)
 v1  結果を代入する変数
 
 単精度浮動小数点数の足し算を行います
 
-  ・mhsp_sub v1,f2,f3
+  ・mhsp_sub v1, f2, f3
 
     f2からf3を引き、結果をv1に代入します。f2,f3はともに単精度浮動小数点数である必要があります
 
-  ・mhsp_mul p1,p2,p3
+  ・mhsp_mul v1, f2, f3
 
-    p2とp3の数値を乗算し、結果をp1に代入します。p2,p3はともに単精度浮動小数点数である必要があります
+    f2とf3の数値を乗算し、結果をv1に代入します。f2,f3はともに単精度浮動小数点数である必要があります
 
-  ・mhsp_div p1,p2,p3
+  ・mhsp_div v1, f2, f3
 
-    p2をp3の数値で割り、結果をp1に代入します。p2,p3はともに単精度浮動小数点数である必要があります
+    f2をf3の数値で割り、結果をv1に代入します。f2,f3はともに単精度浮動小数点数である必要があります
+
+  ・mhsp_int v1, f2
+
+    f2の小数を整数に変換してv1に代入します。小数点以下は切り捨てられます
 
   ・mhsp_fcloseall
 
     MingHSPが内部で開いているファイルを全て閉じます。通常は使う必要はありません
 
+・SWFAction_save v1, n2, n3
 
-・SWFAction_save v1,s1
-
-s1  コンパイルするActionScript
 v1  保存先変数
+n2  v1に代入される最大のサイズ
+n3  SWFActionオブジェクト
 
 statにはオブジェクトデータのサイズ
 
-s1のActionScriptをコンパイルしてオブジェクトデータをv1に代入します。オブジェクトデータはSWFAction_load命令で読み込むことが出来ます
+SWFActionオブジェクトからオブジェクトデータを抽出してv1に代入します。オブジェクトデータはSWFAction_load命令で読み込むことが出来ます。n2にはv1の変数で確保されているサイズより多きいい数字を入れないでください。
+成功した場合も失敗した場合もstatにはv1に代入されるデータのサイズが代入されます。これがn2より大きい場合は必要な量のバッファを確保してやり直してください。
 
-・SWFAction_load v1,v2,p1
+・SWFAction_load v1, v2
 
-p1  オブジェクトデータのサイズ
-v2  SWFAction_saveで保存したオブジェクトデータが代入されている変数
 v1  SWFActionオブジェクトの参照が代入される変数
+v2  SWFAction_saveで保存したオブジェクトデータが代入されている変数
 
 SWFAction_saveで保存したオブジェクトデータからSWFActionオブジェクトを作成します

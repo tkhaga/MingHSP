@@ -71,6 +71,8 @@
 	#define SWFSOUND_STEREO           1
 
 ;original functions
+	#func mhsp_init mhsp_init 0
+
 	#func sel_s sel_s 0
 	#func sel_m sel_m 0
 	#func sel_i sel_i 0
@@ -109,10 +111,10 @@
 	#func mhsp_setwarnbuf mhsp_setwarnbuf 1
 
 ;global functions(?)
-	#func ming_setCubicThreshold ming_setCubicThreshold 0
-	#func ming_setScale ming_setScale 0
-	#func ming_useSWFVersion ming_useSWFVersion 0
-	#func swfbutton_keypress swfbutton_keypress 5
+	#func Ming_setCubicThreshold ming_setCubicThreshold 0
+	#func Ming_setScale ming_setScale 0
+	#func Ming_useSWFVersion ming_useSWFVersion 0
+	#func SWFBUTTON_KEYPRESS swfbutton_keypress 5
 
 ;SWFMovie
 	#func SWFMovie mhsp_SWFMovie 1
@@ -257,7 +259,7 @@
 
 ;SWFAction
 	#func SWFAction mhsp_SWFAction 5
-	#func SWFAction_save SWFAction_save 5
+	#func SWFAction_save SWFAction_save 1
 	#func SWFAction_load SWFAction_load $202
 
 	#module
@@ -291,3 +293,5 @@
 	return
 
 	#global
+
+	mhsp_init

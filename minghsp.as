@@ -10,14 +10,6 @@
 	#define SWFFILL_TILED_BITMAP	0x40
 	#define SWFFILL_CLIPPED_BITMAP	0x41
 
-	#define SWFFONT_SHIFTJIS     0x40
-	#define SWFFONT_UNICODE      0x20
-	#define SWFFONT_ANSI         0x10
-	#define SWFFONT_WIDEOFFSETS  0x08
-	#define SWFFONT_WIDECODES    0x04
-	#define SWFFONT_ISBOLD       0x02
-	#define SWFFONT_ISITALIC     0x01
-
 	#define SWFTEXTFIELD_HASLENGTH 0x02
 	#define SWFTEXTFIELD_NOEDIT    0x08
 	#define SWFTEXTFIELD_PASSWORD  0x10
@@ -75,6 +67,8 @@
 	#define SWF_SOUND_STEREO           1
 
 ;original functions
+	#func mhsp_init mhsp_init 0
+
 	#func sel_s sel_s 0
 	#func sel_m sel_m 0
 	#func sel_i sel_i 0
@@ -119,11 +113,11 @@
 	#func mhsp_getaserror mhsp_getaserror 1
 
 ;global functions(?)
-	#func ming_setCubicThreshold ming_setCubicThreshold 0
-	#func ming_setScale ming_setScale 0
-	#func ming_useSWFVersion ming_useSWFVersion 0
-	#func swfbutton_keypress swfbutton_keypress 5
-	#func ming_useConstants ming_useConstants 0
+	#func Ming_setCubicThreshold ming_setCubicThreshold 0
+	#func Ming_setScale ming_setScale 0
+	#func Ming_useSWFVersion ming_useSWFVersion 0
+	#func SWFBUTTON_KEYPRESS swfbutton_keypress 5
+	#func Ming_useConstants ming_useConstants 0
 
 ;SWFMovie
 	#func SWFMovie mhsp_SWFMovie 1
@@ -290,7 +284,7 @@
 
 ;SWFAction
 	#func SWFAction mhsp_SWFAction 5
-	#func SWFAction_save SWFAction_save 5
+	#func SWFAction_save SWFAction_save 1
 	#func SWFAction_load SWFAction_load $202
 
 ;SWFVideoStream
@@ -367,3 +361,5 @@
 	return
 
 	#global
+
+	mhsp_init

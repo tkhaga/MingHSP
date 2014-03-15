@@ -1,4 +1,5 @@
 EXPORTS
+_mhsp_init@16			=mhsp_init@16
 _ming_setCubicThreshold@16			=ming_setCubicThreshold@16
 _ming_setScale@16			=ming_setScale@16
 _ming_useSWFVersion@16			=ming_useSWFVersion@16

@@ -1,11 +1,12 @@
 /*
     MingHSP - Ming wrapper for HSP
-    THAGA http://www.h5.dion.ne.jp/~markent/
+    Copyright (C) 2003-2006 THAGA http://www.h5.dion.ne.jp/~markent/
 */
 
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #ifdef JAMING
 #include "../ming.h"
 #else
@@ -59,9 +60,11 @@ char* ErrorString;
 char* WarnString;
 #endif
 
-extern char funcname[];
-extern char *warnbuf;
-extern int warnlimit;
+char funcname[MHSP_STRMAX];
+char *warnbuf = NULL;
+int warnlimit;
+int warnsize = 0;
+char buf[MHSP_STRMAX];
 
 char drawCubicTo_flag = 0;
 float ct1, ct2;
@@ -85,16 +88,58 @@ void mhsp_method(byte b, byte *data)
 	}
 }
 
+void mhsp_error(const char *msg, ...)
+{
+	va_list args;
+
+	va_start(args, msg);
+
+	lstrcpy(buf, "命令 \"");
+	if (funcname[0] != '\0')
+		lstrcat(buf, funcname);
+	lstrcat(buf, "\" 内でエラーが発生しました\n\nエラーメッセージ: ");
+	vsprintf(&buf[lstrlen(buf)], msg, args);
+	MessageBox(NULL, buf, "MingHSP", MB_OK | MB_ICONSTOP);
+
+	va_end(args);
+	exit(0);
+}
+
+void mhsp_warn(const char *msg, ...)
+{
+	int len;
+	va_list args;
+
+	va_start(args, msg);
+	vprintf(msg, args);
+
+	vsprintf(buf, msg, args);
+	len = lstrlen(funcname) + lstrlen(buf) + 4;
+	warnsize += len;
+	if (warnsize < warnlimit && warnbuf != NULL)
+		warnbuf += snprintf(warnbuf, len, "%s: %s\r\n", funcname, buf);
+
+	va_end(args);
+}
+
+EXPORT BOOL WINAPI mhsp_init(int p1, int p2, int p3, int p4)
+{
+	Ming_init();
+	Ming_setErrorFunction(mhsp_error);
+	Ming_setWarnFunction(mhsp_warn);
+	return 0;
+}
+
 EXPORT BOOL WINAPI ming_setCubicThreshold(int num, int p2, int p3, int p4)
 {
-	lstrcpy(funcname, "ming_setCubicThreshold");
+	lstrcpy(funcname, "Ming_setCubicThreshold");
 	Ming_setCubicThreshold(num);
 	return 0;
 }
 
 EXPORT BOOL WINAPI ming_setScale(float scale, int p2, int p3, int p4)
 {
-	lstrcpy(funcname, "ming_setScale");
+	lstrcpy(funcname, "Ming_setScale");
 	Ming_setScale(scale);
 	return 0;
 }
@@ -115,7 +160,7 @@ EXPORT BOOL WINAPI swfbutton_keypress(int *c, char *key, int p3, int p4)
 #ifndef JAMING
 EXPORT BOOL WINAPI ming_useConstants(int flag, int p2, int p3, int p4)
 {
-	lstrcpy(funcname, "ming_useConstants");
+	lstrcpy(funcname, "Ming_useConstants");
 	Ming_useConstants(flag);
 	return 0;
 }
@@ -413,7 +458,8 @@ EXPORT BOOL WINAPI mhsp_SWFShape(SWFShape *p1, int p2, int p3, int p4)
 {
 	lstrcpy(funcname, "SWFShape");
 	*p1 = newSWFShape();
-	if (!mhsp_shape) mhsp_shape = *p1;
+	if (!mhsp_shape)
+		mhsp_shape = *p1;
 	return 0;
 }
 
@@ -563,7 +609,9 @@ EXPORT BOOL WINAPI s_drawCubicTo(float bx, float by, float cx, float cy)
 		lstrcpy(funcname, "s_drawCubicTo");
 		SWFShape_drawCubicTo(mhsp_shape, bx, by, cx, cy, ct1, ct2);
 		drawCubicTo_flag = 0;
-	}else{
+	}
+	else
+	{
 		ct1 = bx;
 		ct2 = by;
 		drawCubicTo_flag = 1;
@@ -578,7 +626,9 @@ EXPORT BOOL WINAPI s_drawCubic(float bx, float by, float cx, float cy)
 		lstrcpy(funcname, "s_drawCubic");
 		SWFShape_drawCubic(mhsp_shape, bx, by, cx, cy, c1, c2);
 		drawCubic_flag = 0;
-	}else{
+	}
+	else
+	{
 		c1 = bx;
 		c2 = by;
 		drawCubic_flag = 1;
@@ -736,13 +786,14 @@ EXPORT BOOL WINAPI i_setMatrix(float a, float b, float c, float d)
 		lstrcpy(funcname, "i_setMatrix");
 		SWFDisplayItem_setMatrix(mhsp_item, a, b, c, d, m1, m2);
 		setMatrix_flag = 0;
-		return 0;
-	}else{
+	}
+	else
+	{
 		m1 = a;
 		m2 = b;
 		setMatrix_flag = 1;
-		return 0;
 	}
+	return 0;
 }
 
 EXPORT BOOL WINAPI i_addAction(SWFAction action, int flags, int p3, int p4)
@@ -831,7 +882,8 @@ EXPORT BOOL WINAPI mhsp_SWFGradient(SWFGradient *p1, int p2, int p3, int p4)
 {
 	lstrcpy(funcname, "SWFGradient");
 	*p1 = newSWFGradient();
-	if (mhsp_gradient == NULL) mhsp_gradient = *p1;
+	if (!mhsp_gradient)
+		mhsp_gradient = *p1;
 	return 0;
 }
 
@@ -842,7 +894,9 @@ EXPORT BOOL WINAPI g_addEntry(float ratio, int p2, int p3, int p4)
 		lstrcpy(funcname, "g_addEntry");
 		SWFGradient_addEntry(mhsp_gradient, ratio, p2 & 0xff, p3 & 0xff, p4 & 0xff, e & 0xff);
 		addEntry_flag = 0;
-	}else{
+	}
+	else
+	{
 		e = p2;
 		addEntry_flag = 1;
 	}
@@ -860,7 +914,7 @@ EXPORT BOOL WINAPI mhsp_SWFBitmap(HSPEXINFO *hei, int p2, int p3, int p4)
 	lstrcpy(funcname, "SWFBitmap");
 	p1 = (SWFBitmap *)hei->HspFunc_prm_getv();
 	lstrcpyn(filename, hei->HspFunc_prm_gets(), MHSP_STRMAX);
-	lstrcpyn(alpha, hei->HspFunc_prm_gets(), MHSP_STRMAX);
+	lstrcpyn(alpha, hei->HspFunc_prm_getds(""), MHSP_STRMAX);
 	fp1 = fopen(filename, "rb");
 	if (!fp1)
 		return -2;	/* 第２引数に指定したファイルを開けない */
@@ -882,11 +936,11 @@ EXPORT BOOL WINAPI mhsp_SWFBitmap(HSPEXINFO *hei, int p2, int p3, int p4)
 	}
 	else
 	{
-		return -1;
+		return -1;	/* 非対応フォーマット */
 	}
 	if (!mhsp_bitmap)
 		mhsp_bitmap = *p1;
-	return 0;	/* 非対応フォーマット */
+	return 0;
 }
 
 EXPORT BOOL WINAPI mhsp_SWFBitmap_buf(HSPEXINFO *hei, int p2, int p3, int p4)
@@ -983,7 +1037,8 @@ EXPORT BOOL WINAPI mhsp_SWFMorph(SWFMorph *p1, int p2, int p3, int p4)
 {
 	lstrcpy(funcname, "SWFMorph");
 	*p1 = newSWFMorphShape();
-	if (!mhsp_morph) mhsp_morph = *p1;
+	if (!mhsp_morph)
+		mhsp_morph = *p1;
 	return 0;
 }
 
@@ -991,7 +1046,8 @@ EXPORT BOOL WINAPI p_getShape1(SWFShape *p1, int p2, int p3, int p4)
 {
 	lstrcpy(funcname, "p_getShape1");
 	*p1 = SWFMorph_getShape1(mhsp_morph);
-	if (!mhsp_shape) mhsp_shape = *p1;
+	if (!mhsp_shape)
+		mhsp_shape = *p1;
 	return 0;
 }
 
@@ -999,7 +1055,8 @@ EXPORT BOOL WINAPI p_getShape2(SWFShape *p1, int p2, int p3, int p4)
 {
 	lstrcpy(funcname, "p_getShape2");
 	*p1 = SWFMorph_getShape2(mhsp_morph);
-	if (!mhsp_shape) mhsp_shape = *p1;
+	if (!mhsp_shape)
+		mhsp_shape = *p1;
 	return 0;
 }
 
@@ -1009,7 +1066,8 @@ EXPORT BOOL WINAPI mhsp_SWFText(SWFText *p1, int p2, int p3, int p4)
 {
 	lstrcpy(funcname, "SWFText");
 	*p1 = newSWFText();
-	if (!mhsp_text) mhsp_text = *p1;
+	if (!mhsp_text)
+		mhsp_text = *p1;
 	return 0;
 }
 
@@ -1070,11 +1128,16 @@ EXPORT BOOL WINAPI t_addString(void *p1, char *string, int p3, int p4)
 
 EXPORT BOOL WINAPI t_getWidth(float *p1, unsigned char *string, int p3, int p4)
 {
+#ifdef JAMING
 	char *out;
 	lstrcpy(funcname, "t_getWidth");
 	out = toutf8(string);
 	*p1 = SWFText_getStringWidth(mhsp_text, out);
 	free(out);
+#else
+	lstrcpy(funcname, "t_getWidth");
+	*p1 = SWFText_getStringWidth(mhsp_text, string);
+#endif
 	return 0;
 }
 
@@ -1118,7 +1181,6 @@ EXPORT BOOL WINAPI t_getUTF8Width(float *p1, unsigned char *string, int p3, int 
 	free(out);
 	return 0;
 }
-
 #endif
 
 /* SWFFont */
@@ -1138,16 +1200,28 @@ EXPORT BOOL WINAPI mhsp_SWFFont(SWFFont *p1, char *name, int p3, int p4)
 	}
 	else
 	{
-		*p1 = (SWFFont)newSWFBrowserFont(name);	/* 本当は違うけど */
+		char *out;
+		out = toutf8(name);
+		*p1 = (SWFFont)newSWFBrowserFont(out);	/* 本当は違うけど */
+		free(out);
 	}
-	if (!mhsp_font) mhsp_font = *p1;
+	if (!mhsp_font)
+		mhsp_font = *p1;
 	return 0;
 }
 
 EXPORT BOOL WINAPI fnt_getWidth(float *p1, unsigned char *string, int p3, int p4)
 {
+#ifdef JAMING
+	char *out;
+	lstrcpy(funcname, "fnt_getWidth");
+	out = toutf8(string);
+	*p1 = SWFFont_getStringWidth(mhsp_font, out);
+	free(out);
+#else
 	lstrcpy(funcname, "fnt_getWidth");
 	*p1 = SWFFont_getStringWidth(mhsp_font, string);
+#endif
 	return 0;
 }
 
@@ -1207,7 +1281,8 @@ EXPORT BOOL WINAPI mhsp_SWFTextField(SWFTextField *p1, int flags, int p3, int p4
 	lstrcpy(funcname, "SWFTextField");
 	*p1 = newSWFTextField();
 	SWFTextField_setFlags(*p1, flags);
-	if (!mhsp_field) mhsp_field = *p1;
+	if (!mhsp_field)
+		mhsp_field = *p1;
 	return 0;
 }
 
@@ -1360,7 +1435,8 @@ EXPORT BOOL WINAPI mhsp_SWFMovieClip(SWFMovieClip *p1, int p2, int p3, int p4)
 {
 	lstrcpy(funcname, "SWFMovieClip");
 	*p1 = newSWFMovieClip();
-	if (!mhsp_movieclip) mhsp_movieclip = *p1;
+	if (!mhsp_movieclip)
+		mhsp_movieclip = *p1;
 	return 0;
 }
 
@@ -1368,7 +1444,8 @@ EXPORT BOOL WINAPI mc_add(SWFDisplayItem *p1, SWFBlock block, int p3, int p4)
 {
 	lstrcpy(funcname, "mc_add");
 	*p1 = SWFMovieClip_add(mhsp_movieclip, block);
-	if (!mhsp_item) mhsp_item = *p1;
+	if (!mhsp_item)
+		mhsp_item = *p1;
 	return 0;
 }
 
@@ -1467,7 +1544,8 @@ EXPORT BOOL WINAPI mhsp_SWFButton(SWFButton *p1, int p2, int p3, int p4)
 {
 	lstrcpy(funcname, "SWFButton");
 	*p1 = newSWFButton();
-	if (!mhsp_button) mhsp_button = *p1;
+	if (!mhsp_button)
+		mhsp_button = *p1;
 	return 0;
 }
 
@@ -1868,7 +1946,8 @@ EXPORT BOOL WINAPI mhsp_mul(float *p1, float p2, float p3, int p4)
 
 EXPORT BOOL WINAPI mhsp_div(float *p1, float p2, float p3, int p4)
 {
-	if (!p3) return -1;
+	if (p3 == 0)
+		return -1;
 	*p1 = p2 / p3;
 	return 0;
 }
